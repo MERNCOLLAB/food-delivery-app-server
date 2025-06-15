@@ -9,8 +9,8 @@ import (
 type Order struct {
 	ID              uuid.UUID `gorm:"primaryKey;type:uuid" json:"id"`
 	RestaurantID    uuid.UUID `gorm:"type:uuid;index" json:"restaurantId"`
-	CustomerID      uuid.UUID `gorm:"type:uuid;index" json:"customerId"`
-	DriverID        uuid.UUID `gorm:"type:uuid;index" json:"driverId"`
+	CustomerID      *uuid.UUID `gorm:"type:uuid;index" json:"customerId"`
+	DriverID        *uuid.UUID `gorm:"type:uuid;index" json:"driverId"`
 	Status          Status    `gorm:"type:varchar(20);not null" json:"status"`
 	TotalAmount     float64   `gorm:"not null" json:"totalAmount"`
 	DeliveryAddress string    `gorm:"type:varchar(100)" json:"deliveryAddress"`
@@ -19,7 +19,7 @@ type Order struct {
 
 	Restaurant Restaurant `gorm:"foreignKey:RestaurantID;constraint:OnDelete:CASCADE" json:"restaurant,omitempty"`
 	Customer   User       `gorm:"foreignKey:CustomerID;constraint:OnDelete:SET NULL" json:"customer,omitempty"`
-	Driver     User       `gorm:"foreignKey:DriverID;constraint:OnDelete:SET NULL" json:"driver,omitempty"`
+	Driver     *User       `gorm:"foreignKey:DriverID;constraint:OnDelete:SET NULL" json:"driver,omitempty"`
 
 	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID" json:"items,omitempty"`
 	Notifications []Notification `gorm:"foreignKey:OrderID" json:"notifications,omitempty"`

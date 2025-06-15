@@ -21,3 +21,11 @@ const (
 	Delivered      Status = "DELIVERED"
 	Canceled       Status = "CANCELED"
 )
+
+type PaymentStatus string
+
+const (
+	Waiting PaymentStatus = "WAITING"
+	Success PaymentStatus = "SUCCESS"
+	Failed  PaymentStatus = "FAILED"
+)

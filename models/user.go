@@ -21,4 +21,5 @@ type User struct {
 	Addresses     []Address      `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
 	Restaurants   []Restaurant   `gorm:"foreignKey:OwnerID" json:"restaurants,omitempty"`
 	Notifications []Notification `gorm:"foreignKey:UserID" json:"notifications,omitempty"`
+	Payments      []Payment      `gorm:"foreignKey:CustomerID" json:"payments,omitempty"`
 }

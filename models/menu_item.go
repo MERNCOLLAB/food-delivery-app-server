@@ -7,7 +7,7 @@ import (
 )
 
 type MenuItem struct {
-	ID           uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ID           uuid.UUID `gorm:"primaryKey;type:uuid" json:"id"`
 	RestaurantID uuid.UUID `gorm:"type:uuid;index" json:"restaurantId"`
 	Name         string    `gorm:"type:varchar(100);not null;" json:"name"`
 	Description  string    `gorm:"type:text" json:"description"`

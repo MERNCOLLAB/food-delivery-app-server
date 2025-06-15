@@ -21,5 +21,6 @@ type Order struct {
 	Customer   User       `gorm:"foreignKey:CustomerID;constraint:OnDelete:SET NULL" json:"customer,omitempty"`
 	Driver     User       `gorm:"foreignKey:DriverID;constraint:OnDelete:SET NULL" json:"driver,omitempty"`
 
-	OrderItems []OrderItem `gorm:"foreignKey:OrderID" json:"items,omitempty"`
+	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID" json:"items,omitempty"`
+	Notifications []Notification `gorm:"foreignKey:OrderID" json:"notifications,omitempty"`
 }

@@ -18,5 +18,7 @@ type User struct {
 	CreatedAt      time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 
-	Restaurants []Restaurant `gorm:"foreignKey:OwnerID" json:"restaurants,omitempty"`
+	Addresses     []Address      `gorm:"foreignKey:UserID" json:"addresses,omitempty"`
+	Restaurants   []Restaurant   `gorm:"foreignKey:OwnerID" json:"restaurants,omitempty"`
+	Notifications []Notification `gorm:"foreignKey:UserID" json:"notifications,omitempty"`
 }

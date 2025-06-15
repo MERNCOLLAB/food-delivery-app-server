@@ -17,4 +17,6 @@ type User struct {
 	Role           Role      `gorm:"type:varchar(20)" json:"role"`
 	CreatedAt      time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+
+	Restaurants []Restaurant `gorm:"foreignKey:OwnerID" json:"restaurants,omitempty"`
 }

@@ -16,5 +16,6 @@ type Restaurant struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 
-	Owner User `gorm:"foreignKey:OwnerID;constraint:OnDelete:CASCADE" json:"owner,omitempty"`
+	Owner     User       `gorm:"foreignKey:OwnerID;constraint:OnDelete:CASCADE" json:"owner,omitempty"`
+	MenuItems []MenuItem `gorm:"foreignKey:RestaurantID" json:"menuItems,omitempty"`
 }

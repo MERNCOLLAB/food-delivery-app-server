@@ -18,9 +18,9 @@ type Order struct {
 	UpdatedAt       time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`
 
 	Restaurant *Restaurant `gorm:"foreignKey:RestaurantID;references:ID;constraint:OnDelete:CASCADE" json:"restaurant,omitempty"`
-	Customer   *User       `gorm:"foreignKey:CustomerID;references:ID;constraint:OnDelete:SET NULL" json:"customer,omitempty"`
-	Driver     *User       `gorm:"foreignKey:DriverID;references:ID;constraint:OnDelete:SET NULL" json:"driver,omitempty"`
+	Customer   *User       `gorm:"-" json:"customer,omitempty"`
+	Driver     *User       `gorm:"-" json:"driver,omitempty"`
 
-	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID" json:"items,omitempty"`
+	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID;-:migration" json:"items,omitempty"`
 	Notifications []Notification `gorm:"foreignKey:OrderID" json:"notifications,omitempty"`
 }

@@ -18,8 +18,9 @@ type User struct {
 	CreatedAt      time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 
-	Addresses     []Address      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;-:migration"`
-	Restaurants   []Restaurant   `gorm:"foreignKey:OwnerID;constraint:OnDelete:SET NULL;-:migration" `
-	Notifications []Notification `gorm:"foreignKey:UserID;-:migration" json:"notifications,omitempty"`
-	Payments      []Payment      `gorm:"foreignKey:CustomerID;-:migration" json:"payments,omitempty"`
+	Addresses      []Address       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;-:migration"`
+	Restaurants    []Restaurant    `gorm:"foreignKey:OwnerID;constraint:OnDelete:SET NULL;-:migration" `
+	Notifications  []Notification  `gorm:"foreignKey:UserID;-:migration" json:"notifications,omitempty"`
+	Payments       []Payment       `gorm:"foreignKey:CustomerID;-:migration" json:"payments,omitempty"`
+	PasswordResets []PasswordReset `gorm:"foreignKey:UserID;-:migration" json:"-"`
 }

@@ -13,5 +13,5 @@ type Payment struct {
 	PaymentMethod string        `gorm:"type:varchar(20); not null;" json:"paymentMethod"`
 	PaidAt        time.Time     `gorm:"autoCreateTime" json:"paidAt"`
 	PaymentStatus PaymentStatus `gorm:"type:varchar(20); not null" json:"status"`
-	Customer      User          `gorm:"foreignKey:CustomerID;constraint:OnDelete:CASCADE" json:"customer"`
+	Customer      *User         `gorm:"foreignKey:CustomerID;references:ID;constraint:OnDelete:CASCADE" json:"customer,omitempty"`
 }

@@ -17,6 +17,7 @@ func SyncDatabase() {
 		&models.OrderItem{},
 		&models.Payment{},
 		&models.Notification{},
+		&models.PasswordReset{},
 	)
 
 	if err != nil {

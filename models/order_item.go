@@ -16,6 +16,6 @@ type OrderItem struct {
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 
-	Order    Order    `gorm:"foreignKey:OrderID;constraint:OnDelete:CASCADE" json:"order,omitempty"`
-	MenuItem MenuItem `gorm:"foreignKey:MenuItemID;constraint:OnDelete:CASCADE" json:"menuItem,omitempty"`
+	Order    *Order    `gorm:"-" json:"order,omitempty"`
+	MenuItem *MenuItem `gorm:"-" json:"menuItem,omitempty"`
 }

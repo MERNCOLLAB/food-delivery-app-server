@@ -8,7 +8,9 @@ import (
 func main() {
 	config.LoadEnvVariables()
 
-	infrastructure.ConnectDb()
+	// add --migrate in running Go if it needs db migration
+	config.HandleMigrationFlag()
 
+	infrastructure.ConnectDb()
 	infrastructure.RunGin()
 }

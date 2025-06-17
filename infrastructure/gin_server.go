@@ -17,12 +17,6 @@ func RunGin() {
 
 	RegisterRoutes(r)
 
-	r.GET("/test", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Server is up and running!",
-		})
-	})
-
 	err := r.Run(":" + port)
 	if err != nil {
 		log.Fatal("Failed to run the server")

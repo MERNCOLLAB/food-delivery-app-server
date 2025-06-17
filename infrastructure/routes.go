@@ -21,5 +21,6 @@ func RegisterRoutes(r *gin.Engine) {
 		userGroup.PUT("/update")
 		userGroup.PUT("/update/profile-picture")
 		userGroup.DELETE("/delete")
+		userGroup.GET("/")
 	}
 }

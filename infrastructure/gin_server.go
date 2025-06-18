@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"food-delivery-app-server/middleware"
 	"log"
 	"os"
 
@@ -14,6 +15,8 @@ func RunGin() {
 	}
 
 	r := gin.Default()
+
+	r.Use(middleware.ErrorHandler())
 
 	RegisterRoutes(r)
 

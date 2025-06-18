@@ -16,6 +16,13 @@ func NewHandler(db *gorm.DB) *Handler {
 }
 
 func (h *Handler) SignUp(c *gin.Context) {
+
+	err := h.service.TestError()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
 		"message": "Sign Up Endpoint",
 	})

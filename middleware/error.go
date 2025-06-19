@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	appErr "food-delivery-app-server/pkg/errors" // alias to avoid name clash
+	appErr "food-delivery-app-server/pkg/errors"
 	"log"
 	"net/http"
 

@@ -4,6 +4,7 @@ import (
 	appErr "food-delivery-app-server/pkg/errors"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,22 +17,28 @@ func ErrorHandler() gin.HandlerFunc {
 			err := c.Errors.Last().Err
 			log.Printf("Error: %v", err)
 
+			debug := os.Getenv("GIN_MODE") != "release"
+
 			if appError, ok := err.(*appErr.AppError); ok {
-				// Custom Errors
-				c.JSON(appError.Code, gin.H{
+				response := gin.H{
 					"success": false,
 					"message": appError.Message,
-					"error":   appError.Err.Error(),
-				})
+				}
+				if debug && appError.Err != nil {
+					response["error"] = appError.Err.Error()
+				}
+				c.JSON(appError.Code, response)
 				return
 			}
 
-			// Fallback Error
-			c.JSON(http.StatusInternalServerError, gin.H{
+			response := gin.H{
 				"success": false,
 				"message": "Internal server error",
-				"error":   err.Error(),
-			})
+			}
+			if debug {
+				response["error"] = err.Error()
+			}
+			c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 }

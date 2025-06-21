@@ -19,7 +19,7 @@ type SignUpRequest struct {
 	Role            Role
 }
 
-type SignUpResponse struct {
+type JWTAuthResponse struct {
 	ID   string
 	Role string
 }

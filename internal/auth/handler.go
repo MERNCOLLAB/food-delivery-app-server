@@ -65,7 +65,9 @@ func (h *Handler) OAuth(c *gin.Context) {
 }
 
 func (h *Handler) SignOut(c *gin.Context) {
+	utils.ClearCookie(c)
+
 	c.JSON(200, gin.H{
-		"message": "Sign Out Endpoint",
+		"message": "You have signed out successfully",
 	})
 }

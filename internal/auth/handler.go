@@ -61,6 +61,25 @@ func (h *Handler) SignIn(c *gin.Context) {
 }
 
 func (h *Handler) OAuth(c *gin.Context) {
+	provider := c.Param("provider")
+
+	req, err := http_helper.BindJSON[OAuthRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	user, token, err := h.service.OAuth(*req, provider)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	utils.SetCookie(c, token, 3600*5)
+	c.JSON(200, gin.H{
+			"message": "Signed In Successfully",
+			"user":    user,
+	})
 
 }
 

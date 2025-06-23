@@ -28,3 +28,14 @@ type SignInRequest struct {
 	Email    string
 	Password string
 }
+
+type OAuthRequest struct {
+	AccessToken string `json:"accessToken"`
+}
+
+type UserInfo struct {
+	Email string
+	Name string
+	ProfilePicture string
+	Provider string
+}

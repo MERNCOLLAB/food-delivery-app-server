@@ -10,6 +10,8 @@ import (
 	"food-delivery-app-server/pkg/utils"
 )
 
+var defaultProfilePic string = "https://res.cloudinary.com/dowkytkyb/image/upload/v1750666850/default_profile_qbzide.png"
+
 type Service struct {
 	repo *Repository
 }
@@ -54,7 +56,7 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 		Name:           req.Name,
 		Email:          req.Email,
 		Password:       hashedPassword,
-		ProfilePicture: "https://fallback-image.com",
+		ProfilePicture: defaultProfilePic,
 		Bio:            req.Bio,
 		Phone:          req.Phone,
 		Role:           models.Role(req.Role),

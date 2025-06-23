@@ -13,7 +13,7 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		authGroup.POST("/signup", authHandler.SignUp)
 		authGroup.POST("/signin", authHandler.SignIn)
-		authGroup.POST("/oauth", authHandler.OAuth)
+		authGroup.POST("/oauth/:provider", authHandler.OAuth)
 		authGroup.POST("/signout", authHandler.SignOut)
 	}
 	userGroup := r.Group("/user")

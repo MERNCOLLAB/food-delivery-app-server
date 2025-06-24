@@ -1,6 +1,8 @@
 package user
 
 import (
+	http_helper "food-delivery-app-server/pkg/http"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -16,8 +18,27 @@ func NewHandler(db *gorm.DB) *Handler {
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
+	req, err := http_helper.BindJSON[UpdateUserRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	updatedUser, err := h.service.UpdateUser(*req, userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Update User Endpoint",
+		"message": "User has been updated successfully",
+		"user": updatedUser,
 	})
 }
 

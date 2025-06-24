@@ -19,7 +19,7 @@ type UserClaims struct {
 
 func GenerateJWT(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
-		"ID": user.ID.String(),
+		"userId": user.ID.String(),
 		"role": user.Role,
 		"exp":    time.Now().Add(time.Hour * 5).Unix(), //5 hour token expiration
 	}

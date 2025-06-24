@@ -53,15 +53,15 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 			
-		userId, exists := claims["ID"]
+		userId, exists := claims["userId"]
 		if !exists {
-			appError := appErr.NewUnauthorized("Missing user ID at the token claims", nil)
+			appError := appErr.NewUnauthorized("Missing userId at the token claims", nil)
 			c.JSON(appError.Code, gin.H{ "error": appError.Message})
 			c.Abort()
 			return
 		}
 
-		c.Set("ID", userId)
+		c.Set("userID", userId)
 		c.Set("claims", claims)
 		c.Next()
 	}

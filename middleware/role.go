@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 func RequireRoles (roles ...models.Role) gin.HandlerFunc {
@@ -19,7 +20,7 @@ func RequireRoles (roles ...models.Role) gin.HandlerFunc {
 			return
 		}
 
-		mapClaims, ok := claims.(map[string]interface{})
+		mapClaims, ok := claims.(jwt.MapClaims)
 		if !ok{
 			appError := appErr.NewUnauthorized("Invalid token claims", nil)
 			c.JSON(appError.Code, gin.H {"error": appError.Message})
@@ -42,7 +43,7 @@ func RequireRoles (roles ...models.Role) gin.HandlerFunc {
 			}
 		}
 
-		appError := appErr.NewUnauthorized("Unauthorized to access this resource", nil)
+		appError := appErr.NewUnauthorized("Access Denied. User Role is not allowed", nil)
 		c.JSON(appError.Code, gin.H{"error": appError.Message})
 		c.Abort()
 	}

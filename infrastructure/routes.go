@@ -1,8 +1,11 @@
 package infrastructure
 
 import (
-	"food-delivery-app-server/internal/auth"
 	"food-delivery-app-server/middleware"
+	"food-delivery-app-server/models"
+
+	"food-delivery-app-server/internal/auth"
+	"food-delivery-app-server/internal/user"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,11 +20,13 @@ func RegisterRoutes(r *gin.Engine) {
 		authGroup.POST("/oauth/:provider", authHandler.OAuth)
 		authGroup.POST("/signout", authHandler.SignOut)
 	}
+
+	userHandler := user.NewHandler(DB)
 	userGroup := r.Group("/user", middleware.JWTAuthMiddleware())
 	{
-		userGroup.PUT("/update")
-		userGroup.PUT("/update/profile-picture")
-		userGroup.DELETE("/delete")
-		userGroup.GET("/")
+		userGroup.PUT("/update", userHandler.UpdateUser)
+		userGroup.PUT("/update/profile-picture", userHandler.UpdateProfilePicture)
+		userGroup.DELETE("/delete",userHandler.DeleteUser)
+		userGroup.GET("/", middleware.RequireRoles(models.Admin),userHandler.GetAllUsers)
 	}
 }

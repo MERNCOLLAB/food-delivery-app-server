@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 
 	"food-delivery-app-server/models"
+	"food-delivery-app-server/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -24,17 +25,8 @@ func (r *Repository) UpdateUser(uid uuid.UUID, req UpdateUserRequest) (*models.U
         return nil, err
     }
 
-    if req.Name != nil {
-        user.Name = *req.Name
-    }
-    if req.Email != nil {
-        user.Email = *req.Email
-    }
-    if req.Bio != nil {
-        user.Bio = *req.Bio
-    }
-    if req.Phone != nil {
-        user.Phone = *req.Phone
+    if err := utils.Patch(&user, &req); err != nil {
+        return nil, err
     }
 
     if err := r.db.Save(&user).Error; err != nil {

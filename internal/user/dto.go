@@ -14,7 +14,7 @@ type UpdateUserResponse struct {
     Email *string `json:"email,omitempty"`
     Bio   *string `json:"bio,omitempty"`
     Phone *string `json:"phone,omitempty"`
-	Role models.Role
+	Role models.Role `json:"role,omitempty"`
 }
 
 func NewUpdateUserResponse(user *models.User) *UpdateUserResponse {

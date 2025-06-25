@@ -17,6 +17,12 @@ type UpdateUserResponse struct {
 	Role  models.Role `json:"role,omitempty"`
 }
 
+type UpdateProfilePictureRequest struct {
+	userId      string
+	imageFile   interface{}
+	imageHeader interface{}
+}
+
 func NewUpdateUserResponse(user *models.User) *UpdateUserResponse {
 	return &UpdateUserResponse{
 		Name:  &user.Name,

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"mime/multipart"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -33,6 +35,20 @@ func UploadImage(file multipart.File, fileHeader *multipart.FileHeader) (string,
 	}
 
 	return uploadResult.SecureURL, uploadResult.PublicID, nil
+}
+
+func ExtractCloudinaryPublicID(url, folderName string) string {
+	parts := strings.Split(url, "/")
+	if len(parts) < 2 {
+		return ""
+	}
+
+	publicIDWithExt := parts[len(parts)-1]
+	ext := path.Ext(publicIDWithExt)
+
+	publicID := strings.TrimSuffix(publicIDWithExt, ext)
+
+	return folderName + "/" + publicID
 }
 
 func DeleteImage(publicID string) error {

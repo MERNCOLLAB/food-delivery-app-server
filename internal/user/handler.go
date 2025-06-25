@@ -43,8 +43,35 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 }
 
 func (h *Handler) UpdateProfilePicture(c *gin.Context) {
+	imageFile, fileExists := c.Get("imageFile")
+	imageHeader, headerExists := c.Get("imageHeader")
+
+	if !fileExists || !headerExists {
+		c.JSON(400, gin.H{"error": "Image not found in the context"})
+		return
+	}
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	updateProfilePicData := UpdateProfilePictureRequest{
+		userId:      userId,
+		imageFile:   imageFile,
+		imageHeader: imageHeader,
+	}
+
+	url, err := h.service.UpdateProfilePicture(updateProfilePicData)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Update Profile Picture Endpoint",
+		"message": "Profile picture has been updated successfully",
+		"url":     url,
 	})
 }
 

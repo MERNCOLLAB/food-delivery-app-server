@@ -16,10 +16,9 @@ func NewService(repo *Repository) *Service {
 }
 
 func isValidEmail(email string) bool {
-    re := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
-    return re.MatchString(email)
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+	return re.MatchString(email)
 }
-
 
 func (s *Service) UpdateUser(req UpdateUserRequest, userId string) (*UpdateUserResponse, error) {
 	uid, err := utils.ParseId(userId)
@@ -28,15 +27,15 @@ func (s *Service) UpdateUser(req UpdateUserRequest, userId string) (*UpdateUserR
 	}
 
 	if req.Email != nil && !isValidEmail(*req.Email) {
-        return nil, appErr.NewBadRequest("Invalid email format", nil)
-    }
+		return nil, appErr.NewBadRequest("Invalid email format", nil)
+	}
 
-	updatedUser,err := s.repo.UpdateUser(uid, req)
+	updatedUser, err := s.repo.UpdateUser(uid, req)
 	if err != nil {
 		return nil, appErr.NewInternal("Failed to update the user", err)
 	}
 
-    return NewUpdateUserResponse(updatedUser), nil
+	return NewUpdateUserResponse(updatedUser), nil
 }
 
 func (s *Service) UpdateProfilePicture() {

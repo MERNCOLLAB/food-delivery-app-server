@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"bytes"
 	appErr "food-delivery-app-server/pkg/errors"
 	"io"
 
@@ -29,29 +28,37 @@ func UploadImageValidator(key string) gin.HandlerFunc {
 			return
 		}
 
-		defer file.Close()
-
 		if header.Size > MaxImageSize {
 			appError := appErr.NewBadRequest("File size exceeds 2 MB", nil)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			return
 		}
 
-		buff := bytes.NewBuffer(nil)
-		if _, err := io.Copy(buff, file); err != nil {
+		buff := make([]byte, 512)
+		n, err := file.Read(buff)
+		if err != nil && err != io.EOF {
 			appError := appErr.NewBadRequest("Failed to read the file", err)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			return
 		}
 
-		filetype := http.DetectContentType(buff.Bytes()[:512])
+		filetype := http.DetectContentType(buff[:n])
 		if !allowedTypes[filetype] {
 			appError := appErr.NewBadRequest("Invalid file type. Only JPEG, PNG, and WEBP are allowed", err)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			return
 		}
 
-		c.Set("imageFile", buff)
+		if seeker, ok := file.(io.Seeker); ok {
+			seeker.Seek(0, io.SeekStart)
+		} else {
+			appError := appErr.NewInternal("Cannot seek the file for upload", nil)
+			c.JSON(appError.Code, gin.H{"error": appError.Message})
+			file.Close()
+			return
+		}
+
+		c.Set("imageFile", file)
 		c.Set("imageHeader", header)
 		c.Next()
 	}

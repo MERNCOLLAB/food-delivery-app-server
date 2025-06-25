@@ -93,6 +93,17 @@ func (s *Service) DeleteUser(userId, email string) error {
 	return nil
 }
 
-func (s *Service) GetAllUsers() {
+func (s *Service) GetAllUsers() ([]GetUserResponse, error) {
+	var userResponse []GetUserResponse
 
+	users, err := s.repo.GetAllUsers()
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query all users", err)
+	}
+
+	for _, user := range users {
+		userResponse = append(userResponse, NewGetUserResponse(&user))
+	}
+
+	return userResponse, nil
 }

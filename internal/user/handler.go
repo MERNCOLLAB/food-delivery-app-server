@@ -100,7 +100,13 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 }
 
 func (h *Handler) GetAllUsers(c *gin.Context) {
+	users, err := h.service.GetAllUsers()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Get All Users Endpoint",
+		"allUsers": users,
 	})
 }

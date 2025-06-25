@@ -2,6 +2,7 @@ package user
 
 import "food-delivery-app-server/models"
 
+// Update User & Update Profile Picture
 type UpdateUserRequest struct {
 	Name  *string `json:"name,omitempty"`
 	Email *string `json:"email,omitempty"`
@@ -30,5 +31,26 @@ func NewUpdateUserResponse(user *models.User) *UpdateUserResponse {
 		Bio:   &user.Bio,
 		Phone: &user.Phone,
 		Role:  user.Role,
+	}
+}
+
+// Get All Users
+type GetUserResponse struct {
+	Name           *string     `json:"name,omitempty"`
+	Email          *string     `json:"email,omitempty"`
+	Bio            *string     `json:"bio,omitempty"`
+	ProfilePicture *string     `json:"profilePicture,omitempty"`
+	Phone          *string     `json:"phone,omitempty"`
+	Role           models.Role `json:"role,omitempty"`
+}
+
+func NewGetUserResponse(user *models.User) GetUserResponse {
+	return GetUserResponse{
+		Name:           &user.Name,
+		Email:          &user.Email,
+		Bio:            &user.Bio,
+		Phone:          &user.Phone,
+		ProfilePicture: &user.ProfilePicture,
+		Role:           user.Role,
 	}
 }

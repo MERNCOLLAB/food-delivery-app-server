@@ -59,5 +59,10 @@ func (r *Repository) DeleteUser(uid uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) GetAllUsers() {
+func (r *Repository) GetAllUsers() ([]models.User, error) {
+	var users []models.User
+	if err := r.db.Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
 }

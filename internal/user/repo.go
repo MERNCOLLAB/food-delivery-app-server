@@ -51,12 +51,12 @@ func (r *Repository) UpdateProfilePictureURL(uid uuid.UUID, url string) error {
 	return r.db.Save(&user).Error
 }
 
-func (r *Repository) FindUserByName() {
+func (r *Repository) DeleteUser(uid uuid.UUID) error {
+	if err := r.db.Delete(&models.User{}, "id = ?", uid).Error; err != nil {
+		return err
+	}
 
-}
-
-func (r *Repository) DeleteUser() {
-
+	return nil
 }
 
 func (r *Repository) GetAllUsers() {

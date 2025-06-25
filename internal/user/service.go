@@ -4,8 +4,8 @@ import (
 	"mime/multipart"
 	"regexp"
 
-	"food-delivery-app-server/internal/auth"
 	appErr "food-delivery-app-server/pkg/errors"
+	"food-delivery-app-server/pkg/media"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -55,12 +55,7 @@ func (s *Service) UpdateProfilePicture(updateProfilePicData UpdateProfilePicture
 		return "", appErr.NewInternal("Failed to fetch the user", err)
 	}
 
-	if user.ProfilePicture != auth.DefaultProfilePic && user.ProfilePicture != "" {
-		publicID := utils.ExtractCloudinaryPublicID(user.ProfilePicture, "profile_pictures")
-		if publicID != "" {
-			utils.DeleteImage(publicID)
-		}
-	}
+	media.DeleteProfilePicIfNotDefault(user.ProfilePicture, "profile_pictures")
 
 	url, _, err := utils.UploadImage(file, fileHeader)
 	if err != nil {
@@ -88,6 +83,8 @@ func (s *Service) DeleteUser(userId, email string) error {
 	if user.Email != email {
 		return appErr.NewBadRequest("Email does not match", nil)
 	}
+
+	media.DeleteProfilePicIfNotDefault(user.ProfilePicture, "profile_pictures")
 
 	if err := s.repo.DeleteUser(uid); err != nil {
 		return appErr.NewInternal("Failed to delete the user", err)

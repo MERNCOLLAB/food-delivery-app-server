@@ -4,6 +4,7 @@ import (
 	"mime/multipart"
 	"regexp"
 
+	"food-delivery-app-server/internal/auth"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/utils"
 )
@@ -47,6 +48,18 @@ func (s *Service) UpdateProfilePicture(updateProfilePicData UpdateProfilePicture
 	uid, err := utils.ParseId(userId)
 	if err != nil {
 		return "", appErr.NewBadRequest("Invalid ID", err)
+	}
+
+	user, err := s.repo.FindUserByID(uid)
+	if err != nil {
+		return "", appErr.NewInternal("Failed to fetch the user", err)
+	}
+
+	if user.ProfilePicture != auth.DefaultProfilePic && user.ProfilePicture != "" {
+		publicID := utils.ExtractCloudinaryPublicID(user.ProfilePicture, "profile_pictures")
+		if publicID != "" {
+			utils.DeleteImage(publicID)
+		}
 	}
 
 	url, _, err := utils.UploadImage(file, fileHeader)

@@ -35,8 +35,11 @@ func (r *Repository) UpdateUser(uid uuid.UUID, req UpdateUserRequest) (*models.U
 	return &user, nil
 }
 
-func (r *Repository) FindUserByEmail() {
-
+func (r *Repository) FindUserByID(uid uuid.UUID) (*models.User, error) {
+	if err := r.db.First(&user, "id = ?", uid).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *Repository) UpdateProfilePictureURL(uid uuid.UUID, url string) error {

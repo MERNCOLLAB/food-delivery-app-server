@@ -34,8 +34,8 @@ type OAuthRequest struct {
 }
 
 type UserInfo struct {
-	Email string
-	Name string
+	Email          string
+	Name           string
 	ProfilePicture string
-	Provider string
+	Provider       string
 }

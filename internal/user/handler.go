@@ -38,7 +38,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"message": "User has been updated successfully",
-		"user": updatedUser,
+		"user":    updatedUser,
 	})
 }
 

@@ -10,20 +10,20 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func RequireRoles (roles ...models.Role) gin.HandlerFunc {
+func RequireRoles(roles ...models.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("claims")
 		if !exists {
 			appError := appErr.NewUnauthorized("Missing token claims", nil)
-			c.JSON(appError.Code, gin.H{ "error": appError.Message})
+			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			c.Abort()
 			return
 		}
 
 		mapClaims, ok := claims.(jwt.MapClaims)
-		if !ok{
+		if !ok {
 			appError := appErr.NewUnauthorized("Invalid token claims", nil)
-			c.JSON(appError.Code, gin.H {"error": appError.Message})
+			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			c.Abort()
 			return
 		}
@@ -31,7 +31,7 @@ func RequireRoles (roles ...models.Role) gin.HandlerFunc {
 		role, ok := mapClaims["role"].(string)
 		if !ok {
 			appError := appErr.NewUnauthorized("Missing user role in token", nil)
-			c.JSON(appError.Code, gin.H{ "error": appError.Message})
+			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			c.Abort()
 			return
 		}

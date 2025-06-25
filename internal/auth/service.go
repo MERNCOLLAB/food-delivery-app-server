@@ -115,53 +115,51 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, st
 	var err error
 
 	switch provider {
-		case "google":
-			info, err = s.VerifyGoogleToken(req.AccessToken)
-		case "facebook":
-			info, err = s.VerifyFacebookToken(req.AccessToken)
-		default:
-			return nil, "", appErr.NewBadRequest("Unsupported provider", nil)
+	case "google":
+		info, err = s.VerifyGoogleToken(req.AccessToken)
+	case "facebook":
+		info, err = s.VerifyFacebookToken(req.AccessToken)
+	default:
+		return nil, "", appErr.NewBadRequest("Unsupported provider", nil)
 	}
 
-    if err != nil {
-        return nil, "", appErr.NewBadRequest("Failed to verify token", err)
-    }
+	if err != nil {
+		return nil, "", appErr.NewBadRequest("Failed to verify token", err)
+	}
 
 	user, err := s.repo.FindUserByEmail(info.Email)
 	if err != nil {
 		return nil, "", appErr.NewBadRequest("User with that email already exists", nil)
 	}
 
-	newUserID := utils.GenerateUUID()	
+	newUserID := utils.GenerateUUID()
 
 	// Missing Data:  Role, Phone, Number (Email is null for Facebook)
 	if user == nil {
 		user = &models.User{
-			ID:newUserID,
-			Email: info.Email,
-			Name: info.Name,
+			ID:             newUserID,
+			Email:          info.Email,
+			Name:           info.Name,
 			ProfilePicture: info.ProfilePicture,
-			Provider: info.Provider,
+			Provider:       info.Provider,
 		}
 		user, err = s.repo.CreateUser(user)
-        if err != nil {
-            return nil, "", appErr.NewInternal("Failed to create user", err)
-        }
+		if err != nil {
+			return nil, "", appErr.NewInternal("Failed to create user", err)
+		}
 	}
 
-
-
-	token,err := utils.GenerateJWT(user)
+	token, err := utils.GenerateJWT(user)
 	if err != nil {
-        return nil, "", appErr.NewInternal("Failed to generate token", err)
-    }
+		return nil, "", appErr.NewInternal("Failed to generate token", err)
+	}
 
-	  userResponse := JWTAuthResponse{
-        ID:   user.ID.String(),
-        Role: string(user.Role),
-    }
+	userResponse := JWTAuthResponse{
+		ID:   user.ID.String(),
+		Role: string(user.Role),
+	}
 
-    return &userResponse, token, nil
+	return &userResponse, token, nil
 
 }
 
@@ -183,13 +181,12 @@ func (s *Service) VerifyGoogleToken(accessToken string) (*UserInfo, error) {
 	}
 
 	return &UserInfo{
-		Email:    data.Email,
-		Name:     data.Name,
-		ProfilePicture:  data.Picture,
-		Provider: "google",
+		Email:          data.Email,
+		Name:           data.Name,
+		ProfilePicture: data.Picture,
+		Provider:       "google",
 	}, nil
 }
-
 
 func (s *Service) VerifyFacebookToken(accessToken string) (*UserInfo, error) {
 	url := "https://graph.facebook.com/me?fields=id,name,email,picture&access_token=" + accessToken
@@ -214,9 +211,9 @@ func (s *Service) VerifyFacebookToken(accessToken string) (*UserInfo, error) {
 	}
 
 	return &UserInfo{
-		Email:    data.Email,
-		Name:     data.Name,
-		ProfilePicture:  data.Picture.Data.URL,
-		Provider: "facebook",
+		Email:          data.Email,
+		Name:           data.Name,
+		ProfilePicture: data.Picture.Data.URL,
+		Provider:       "facebook",
 	}, nil
 }

@@ -77,8 +77,8 @@ func (h *Handler) OAuth(c *gin.Context) {
 
 	utils.SetCookie(c, token, 3600*5)
 	c.JSON(200, gin.H{
-			"message": "Signed In Successfully",
-			"user":    user,
+		"message": "Signed In Successfully",
+		"user":    user,
 	})
 
 }

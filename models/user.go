@@ -15,10 +15,10 @@ type User struct {
 	Bio            string    `gorm:"type:text" json:"bio"`
 	Phone          string    `gorm:"type:varchar(20)" json:"phone"`
 	Role           Role      `gorm:"type:varchar(20)" json:"role"`
-	Provider 		string `gorm:"type:text" json:"provider"`
+	Provider       string    `gorm:"type:text" json:"provider"`
 
-	CreatedAt      time.Time `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 
 	Addresses      []Address       `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;-:migration"`
 	Restaurants    []Restaurant    `gorm:"foreignKey:OwnerID;constraint:OnDelete:SET NULL;-:migration" `

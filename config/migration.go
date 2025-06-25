@@ -11,15 +11,15 @@ func HandleMigrationFlag() {
 	migrateFlag := flag.Bool("migrate", false, "run db migration and exit")
 	flag.Parse()
 
-	if *migrateFlag{
+	if *migrateFlag {
 		infrastructure.ConnectDb()
 
 		log.Println("Starting automigrate...")
-		infrastructure.SyncDatabase();
+		infrastructure.SyncDatabase()
 
 		log.Println("Migration complete... exiting...")
 		os.Exit(0)
-	}else {
+	} else {
 		log.Println("Skipping db migation (flag was not set)")
 	}
 }

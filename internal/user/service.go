@@ -1,6 +1,7 @@
 package user
 
 import (
+	"mime/multipart"
 	"regexp"
 
 	appErr "food-delivery-app-server/pkg/errors"
@@ -38,8 +39,26 @@ func (s *Service) UpdateUser(req UpdateUserRequest, userId string) (*UpdateUserR
 	return NewUpdateUserResponse(updatedUser), nil
 }
 
-func (s *Service) UpdateProfilePicture() {
+func (s *Service) UpdateProfilePicture(updateProfilePicData UpdateProfilePictureRequest) (string, error) {
+	userId := updateProfilePicData.userId
+	file := updateProfilePicData.imageFile.(multipart.File)
+	fileHeader := updateProfilePicData.imageHeader.(*multipart.FileHeader)
 
+	uid, err := utils.ParseId(userId)
+	if err != nil {
+		return "", appErr.NewBadRequest("Invalid ID", err)
+	}
+
+	url, _, err := utils.UploadImage(file, fileHeader)
+	if err != nil {
+		return "", appErr.NewInternal("Failed to upload the image", err)
+	}
+
+	if err := s.repo.UpdateProfilePictureURL(uid, url); err != nil {
+		return "", appErr.NewInternal("Failed to update the profile picture URL", err)
+	}
+
+	return url, nil
 }
 
 func (s *Service) DeleteUser() {

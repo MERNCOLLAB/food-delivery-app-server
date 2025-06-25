@@ -39,8 +39,13 @@ func (r *Repository) FindUserByEmail() {
 
 }
 
-func (r *Repository) UpdateProfilePictureURL() {
+func (r *Repository) UpdateProfilePictureURL(uid uuid.UUID, url string) error {
+	if err := r.db.First(&user, "id = ?", uid).Error; err != nil {
+		return err
+	}
+	user.ProfilePicture = url
 
+	return r.db.Save(&user).Error
 }
 
 func (r *Repository) FindUserByName() {

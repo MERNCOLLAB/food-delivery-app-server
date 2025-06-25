@@ -76,8 +76,26 @@ func (h *Handler) UpdateProfilePicture(c *gin.Context) {
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		c.JSON(400, gin.H{"error": "email query parameter is required"})
+		return
+	}
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = h.service.DeleteUser(userId, email)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Delete User Endpoint",
+		"message": "User account has been deleted successfully",
 	})
 }
 

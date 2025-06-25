@@ -74,8 +74,26 @@ func (s *Service) UpdateProfilePicture(updateProfilePicData UpdateProfilePicture
 	return url, nil
 }
 
-func (s *Service) DeleteUser() {
+func (s *Service) DeleteUser(userId, email string) error {
+	uid, err := utils.ParseId(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid ID", err)
+	}
 
+	user, err := s.repo.FindUserByID(uid)
+	if err != nil {
+		return appErr.NewNotFound("User not found", err)
+	}
+
+	if user.Email != email {
+		return appErr.NewBadRequest("Email does not match", nil)
+	}
+
+	if err := s.repo.DeleteUser(uid); err != nil {
+		return appErr.NewInternal("Failed to delete the user", err)
+	}
+
+	return nil
 }
 
 func (s *Service) GetAllUsers() {

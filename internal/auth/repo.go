@@ -32,3 +32,10 @@ func (r *Repository) CreateUser(user *models.User) (*models.User, error) {
 	}
 	return user, nil
 }
+
+func (r *Repository) CreateAddress(address *models.Address) (*models.Address, error) {
+	if err := r.db.Create(address).Error; err != nil {
+		return nil, err
+	}
+	return address, nil
+}

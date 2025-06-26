@@ -16,6 +16,7 @@ type SignUpRequest struct {
 	Email           string
 	Bio             string
 	Phone           string
+	Address         string
 	Password        string
 	ConfirmPassword string
 	Role            Role

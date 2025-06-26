@@ -1,12 +1,14 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"regexp"
 
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
+	"food-delivery-app-server/pkg/geocode"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -21,7 +23,7 @@ func NewService(repo *Repository) *Service {
 }
 
 func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
-	if req.Email == "" || req.Password == "" || req.ConfirmPassword == "" ||
+	if req.Email == "" || req.Password == "" || req.ConfirmPassword == "" || req.Address == "" ||
 		req.FirstName == "" || req.LastName == "" || req.Bio == "" || req.Phone == "" {
 		return nil, "", appErr.NewBadRequest("Missing required fields", nil)
 	}
@@ -50,6 +52,7 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 	}
 
 	userId := utils.GenerateUUID()
+	addressId := utils.GenerateUUID()
 
 	newUser := &models.User{
 		ID:             userId,
@@ -63,9 +66,29 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 		Role:           models.Role(req.Role),
 	}
 
+	ctx := context.Background()
+	lat, long, err := geocode.Geocode(ctx, req.Address)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to geocode the provided address", err)
+	}
+
+	newAddress := &models.Address{
+		ID:        addressId,
+		UserID:    &userId,
+		Address:   req.Address,
+		IsDefault: true,
+		Latitude:  lat,
+		Longitude: long,
+	}
+
 	createdUser, err := s.repo.CreateUser(newUser)
 	if err != nil {
 		return nil, "", appErr.NewInternal("Failed to create user at database", err)
+	}
+
+	_, err = s.repo.CreateAddress(newAddress)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to create address at database", err)
 	}
 
 	token, err := utils.GenerateJWT(createdUser)
@@ -142,6 +165,7 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, st
 			FirstName:      info.FirstName,
 			LastName:       info.LastName,
 			ProfilePicture: info.ProfilePicture,
+			Role:           models.Customer,
 			Provider:       info.Provider,
 		}
 		user, err = s.repo.CreateUser(user)

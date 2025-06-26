@@ -1,5 +1,6 @@
 package auth
 
+// JWT Authentication Feature
 type Role string
 
 const (
@@ -10,7 +11,8 @@ const (
 )
 
 type SignUpRequest struct {
-	Name            string
+	FirstName       string
+	LastName        string
 	Email           string
 	Bio             string
 	Phone           string
@@ -29,13 +31,33 @@ type SignInRequest struct {
 	Password string
 }
 
+// Oauth Feature
 type OAuthRequest struct {
 	AccessToken string `json:"accessToken"`
 }
 
+type GoogleResponseData struct {
+	Email      string `json:"email"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
+	Picture    string `json:"picture"`
+}
+
+type FacebookResponseData struct {
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Picture   struct {
+		Data struct {
+			URL string `json:"url"`
+		} `json:"data"`
+	} `json:"picture"`
+}
+
 type UserInfo struct {
 	Email          string
-	Name           string
+	FirstName      string
+	LastName       string
 	ProfilePicture string
 	Provider       string
 }

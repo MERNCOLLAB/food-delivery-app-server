@@ -1,12 +1,14 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"regexp"
 
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
+	"food-delivery-app-server/pkg/geocode"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -21,8 +23,8 @@ func NewService(repo *Repository) *Service {
 }
 
 func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
-	if req.Email == "" || req.Password == "" || req.ConfirmPassword == "" ||
-		req.Name == "" || req.Bio == "" || req.Phone == "" {
+	if req.Email == "" || req.Password == "" || req.ConfirmPassword == "" || req.Address == "" ||
+		req.FirstName == "" || req.LastName == "" || req.Bio == "" || req.Phone == "" {
 		return nil, "", appErr.NewBadRequest("Missing required fields", nil)
 	}
 
@@ -50,10 +52,12 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 	}
 
 	userId := utils.GenerateUUID()
+	addressId := utils.GenerateUUID()
 
 	newUser := &models.User{
 		ID:             userId,
-		Name:           req.Name,
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
 		Email:          req.Email,
 		Password:       hashedPassword,
 		ProfilePicture: DefaultProfilePic,
@@ -62,9 +66,29 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 		Role:           models.Role(req.Role),
 	}
 
+	ctx := context.Background()
+	lat, long, err := geocode.Geocode(ctx, req.Address)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to geocode the provided address", err)
+	}
+
+	newAddress := &models.Address{
+		ID:        addressId,
+		UserID:    &userId,
+		Address:   req.Address,
+		IsDefault: true,
+		Latitude:  lat,
+		Longitude: long,
+	}
+
 	createdUser, err := s.repo.CreateUser(newUser)
 	if err != nil {
 		return nil, "", appErr.NewInternal("Failed to create user at database", err)
+	}
+
+	_, err = s.repo.CreateAddress(newAddress)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to create address at database", err)
 	}
 
 	token, err := utils.GenerateJWT(createdUser)
@@ -134,13 +158,14 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, st
 
 	newUserID := utils.GenerateUUID()
 
-	// Missing Data:  Role, Phone, Number (Email is null for Facebook)
 	if user == nil {
 		user = &models.User{
 			ID:             newUserID,
 			Email:          info.Email,
-			Name:           info.Name,
+			FirstName:      info.FirstName,
+			LastName:       info.LastName,
 			ProfilePicture: info.ProfilePicture,
+			Role:           models.Customer,
 			Provider:       info.Provider,
 		}
 		user, err = s.repo.CreateUser(user)
@@ -164,47 +189,34 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, st
 }
 
 func (s *Service) VerifyGoogleToken(accessToken string) (*UserInfo, error) {
+	var data GoogleResponseData
 	resp, err := http.Get("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + accessToken)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return nil, appErr.NewInternal("failed to verify Google token", err)
 	}
 	defer resp.Body.Close()
 
-	var data struct {
-		Email   string `json:"email"`
-		Name    string `json:"name"`
-		Picture string `json:"picture"`
-	}
-
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
 
 	return &UserInfo{
 		Email:          data.Email,
-		Name:           data.Name,
+		FirstName:      data.GivenName,
+		LastName:       data.FamilyName,
 		ProfilePicture: data.Picture,
 		Provider:       "google",
 	}, nil
 }
 
 func (s *Service) VerifyFacebookToken(accessToken string) (*UserInfo, error) {
-	url := "https://graph.facebook.com/me?fields=id,name,email,picture&access_token=" + accessToken
+	var data FacebookResponseData
+	url := "https://graph.facebook.com/me?fields=id,first_name,last_name,email,picture&access_token=" + accessToken
 	resp, err := http.Get(url)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return nil, appErr.NewInternal("failed to verify Facebook token", err)
 	}
 	defer resp.Body.Close()
-
-	var data struct {
-		Email   string `json:"email"`
-		Name    string `json:"name"`
-		Picture struct {
-			Data struct {
-				URL string `json:"url"`
-			} `json:"data"`
-		} `json:"picture"`
-	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
@@ -212,7 +224,8 @@ func (s *Service) VerifyFacebookToken(accessToken string) (*UserInfo, error) {
 
 	return &UserInfo{
 		Email:          data.Email,
-		Name:           data.Name,
+		FirstName:      data.FirstName,
+		LastName:       data.LastName,
 		ProfilePicture: data.Picture.Data.URL,
 		Provider:       "facebook",
 	}, nil

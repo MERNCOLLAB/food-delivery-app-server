@@ -5,6 +5,7 @@ import (
 	"food-delivery-app-server/models"
 
 	"food-delivery-app-server/internal/auth"
+	"food-delivery-app-server/internal/resetpassword"
 	"food-delivery-app-server/internal/user"
 
 	"github.com/gin-gonic/gin"
@@ -30,5 +31,13 @@ func RegisterRoutes(r *gin.Engine) {
 			userHandler.UpdateProfilePicture)
 		userGroup.DELETE("/delete", userHandler.DeleteUser)
 		userGroup.GET("/", middleware.RequireRoles(models.Admin), userHandler.GetAllUsers)
+	}
+
+	resetPasswordHandler := resetpassword.NewHandler(DB)
+	resetPasswordGroup := r.Group("/reset-password")
+	{
+		resetPasswordGroup.POST("/request", resetPasswordHandler.RequestResetPassword)
+		resetPasswordGroup.POST("/verify-code", resetPasswordHandler.VerifyResetCode)
+		resetPasswordGroup.PUT("/update", resetPasswordHandler.UpdatePassword)
 	}
 }

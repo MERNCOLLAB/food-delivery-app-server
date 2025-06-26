@@ -21,6 +21,6 @@ type Order struct {
 	Customer   *User       `gorm:"-" json:"customer,omitempty"`
 	Driver     *User       `gorm:"-" json:"driver,omitempty"`
 
-	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID;-:migration" json:"items,omitempty"`
+	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID;" json:"items,omitempty"`
 	Notifications []Notification `gorm:"foreignKey:OrderID" json:"notifications,omitempty"`
 }

@@ -39,3 +39,14 @@ func (r *Repository) CreateAddress(address *models.Address) (*models.Address, er
 	}
 	return address, nil
 }
+
+func (r *Repository) FindFacebookUserByProfilePicturePrefix(string) (*models.User, error) {
+	prefix := "https://platform-lookaside.fbsbx.com"
+	if err := r.db.Where("profile_picture LIKE ? AND provider = ?", prefix+"%", "facebook").First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}

@@ -18,7 +18,8 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		authGroup.POST("/signup", authHandler.SignUp)
 		authGroup.POST("/signin", authHandler.SignIn)
-		authGroup.POST("/oauth/:provider", authHandler.OAuth)
+		authGroup.POST("/oauth-signup/:provider", authHandler.OAuthSignUp)
+		authGroup.POST("/oauth-signin/:provider", authHandler.OAuthSignIn)
 		authGroup.POST("/send-otp", authHandler.SendOTP)
 		authGroup.POST("/verify-otp", authHandler.VerifyOTP)
 		authGroup.POST("/signout", authHandler.SignOut)

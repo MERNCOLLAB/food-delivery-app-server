@@ -166,7 +166,7 @@ func (s *Service) SendOTP(stateID, phone string) error {
 	data, ok := utils.OAuthTempStore.M[stateID]
 	utils.OAuthTempStore.RUnlock()
 	if !ok || time.Now().After(data.ExpiresAt) {
-		return appErr.NewBadRequest("Invalid or expired state ID", nil)
+		return appErr.NewBadRequest("Invalid or Expired State ID", nil)
 	}
 
 	otp := utils.GenerateOTP()
@@ -181,8 +181,65 @@ func (s *Service) SendOTP(stateID, phone string) error {
 	return nil
 }
 
-func (s *Service) VerifyOTP() {
+func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, error) {
+	phone := req.Phone
+	otp := req.OTP
+	stateID := req.StateID
 
+	if err := sms.ValidatePhone(phone); err != nil {
+		return nil, "", appErr.NewBadRequest("Invalid phone number", err)
+	}
+
+	utils.OtpStore.RLock()
+	expectedOTP, ok := utils.OtpStore.M[phone]
+	utils.OtpStore.RUnlock()
+	if !ok || expectedOTP != otp {
+		return nil, "", appErr.NewBadRequest("Invalid or expired OTP", nil)
+	}
+
+	utils.OAuthTempStore.RLock()
+	oAuthData, ok := utils.OAuthTempStore.M[stateID]
+	utils.OAuthTempStore.RUnlock()
+	if !ok || time.Now().After(oAuthData.ExpiresAt) {
+		return nil, "", appErr.NewBadRequest("Invalid or expired state ID", nil)
+	}
+
+	info, ok := oAuthData.Info.(*UserInfo)
+	if !ok {
+		return nil, "", appErr.NewInternal("Failed to parse OAuth user info", nil)
+	}
+
+	userId := utils.GenerateUUID()
+	newUser := &models.User{
+		ID:             userId,
+		FirstName:      info.FirstName,
+		LastName:       info.LastName,
+		Email:          info.Email,
+		ProfilePicture: info.ProfilePicture,
+		Bio:            "",
+		Phone:          phone,
+		Role:           models.Customer,
+		Provider:       info.Provider,
+	}
+
+	createdUser, err := s.repo.CreateUser(newUser)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to create user at database", err)
+	}
+
+	token, err := utils.GenerateJWT(createdUser)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to generate token", err)
+	}
+
+	utils.CleanMemory(phone, stateID)
+
+	userResponse := JWTAuthResponse{
+		ID:   createdUser.ID.String(),
+		Role: string(createdUser.Role),
+	}
+
+	return &userResponse, token, nil
 }
 
 func (s *Service) VerifyGoogleToken(accessToken string) (*UserInfo, error) {

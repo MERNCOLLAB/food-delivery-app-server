@@ -77,7 +77,7 @@ func (h *Handler) OAuth(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"stateID": stateID,
+		"stateId": stateID,
 		"message": fmt.Sprintf("OAuth with %s succeeded; please verify phone next.", provider),
 	})
 }
@@ -98,7 +98,24 @@ func (h *Handler) SendOTP(c *gin.Context) {
 }
 
 func (h *Handler) VerifyOTP(c *gin.Context) {
+	req, err := http_helper.BindJSON[VerifyOTPRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
 
+	user, token, err := h.service.VerifyOTP(*req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	utils.SetCookie(c, token, 3600*5)
+
+	c.JSON(200, gin.H{
+		"message": "OTP verified and user created successfully",
+		"user":    user,
+	})
 }
 
 func (h *Handler) SignOut(c *gin.Context) {

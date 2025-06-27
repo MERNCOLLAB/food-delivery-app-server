@@ -36,3 +36,13 @@ func GenerateStateID(info interface{}) string {
 	OAuthTempStore.Unlock()
 	return stateID
 }
+
+func CleanMemory(phone, stateID string) {
+	OtpStore.Lock()
+	delete(OtpStore.M, phone)
+	OtpStore.Unlock()
+
+	OAuthTempStore.Lock()
+	delete(OAuthTempStore.M, stateID)
+	OAuthTempStore.Unlock()
+}

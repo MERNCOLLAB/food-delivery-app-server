@@ -134,7 +134,7 @@ func (s *Service) SignIn(req SignInRequest) (*JWTAuthResponse, string, error) {
 	return &userResponse, token, nil
 }
 
-func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, string, error) {
+func (s *Service) OAuth(req OAuthRequest, provider string) (string, error) {
 	var info *UserInfo
 	var err error
 
@@ -144,47 +144,23 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, st
 	case "facebook":
 		info, err = s.VerifyFacebookToken(req.AccessToken)
 	default:
-		return nil, "", appErr.NewBadRequest("Unsupported provider", nil)
+		return "", appErr.NewBadRequest("Unsupported provider", nil)
 	}
 
 	if err != nil {
-		return nil, "", appErr.NewBadRequest("Failed to verify token", err)
+		return "", appErr.NewBadRequest("Failed to verify token", err)
 	}
 
-	user, err := s.repo.FindUserByEmail(info.Email)
-	if err != nil {
-		return nil, "", appErr.NewBadRequest("User with that email already exists", nil)
-	}
+	stateID := utils.GenerateStateID(info)
 
-	newUserID := utils.GenerateUUID()
+	return stateID, nil
+}
 
-	if user == nil {
-		user = &models.User{
-			ID:             newUserID,
-			Email:          info.Email,
-			FirstName:      info.FirstName,
-			LastName:       info.LastName,
-			ProfilePicture: info.ProfilePicture,
-			Role:           models.Customer,
-			Provider:       info.Provider,
-		}
-		user, err = s.repo.CreateUser(user)
-		if err != nil {
-			return nil, "", appErr.NewInternal("Failed to create user", err)
-		}
-	}
+func (s *Service) SendOTP() {
 
-	token, err := utils.GenerateJWT(user)
-	if err != nil {
-		return nil, "", appErr.NewInternal("Failed to generate token", err)
-	}
+}
 
-	userResponse := JWTAuthResponse{
-		ID:   user.ID.String(),
-		Role: string(user.Role),
-	}
-
-	return &userResponse, token, nil
+func (s *Service) VerifyOTP() {
 
 }
 

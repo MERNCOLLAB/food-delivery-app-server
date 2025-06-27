@@ -4,6 +4,8 @@ import (
 	http_helper "food-delivery-app-server/pkg/http"
 	"food-delivery-app-server/pkg/utils"
 
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -62,24 +64,25 @@ func (h *Handler) SignIn(c *gin.Context) {
 
 func (h *Handler) OAuth(c *gin.Context) {
 	provider := c.Param("provider")
-
 	req, err := http_helper.BindJSON[OAuthRequest](c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	user, token, err := h.service.OAuth(*req, provider)
+	stateID, err := h.service.OAuth(*req, provider)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	utils.SetCookie(c, token, 3600*5)
 	c.JSON(200, gin.H{
-		"message": "Signed In Successfully",
-		"user":    user,
+		"stateID": stateID,
+		"message": fmt.Sprintf("OAuth with %s succeeded; please verify phone next.", provider),
 	})
+}
+
+func (h *Handler) SendOTP(c *gin.Context) {
 
 }
 

@@ -2,14 +2,14 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"log"
-	"net/http"
+	"strings"
 	"time"
 
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/geocode"
+	"food-delivery-app-server/pkg/oauth"
 	"food-delivery-app-server/pkg/sms"
 	"food-delivery-app-server/pkg/utils"
 )
@@ -135,15 +135,15 @@ func (s *Service) SignIn(req SignInRequest) (*JWTAuthResponse, string, error) {
 	return &userResponse, token, nil
 }
 
-func (s *Service) OAuth(req OAuthRequest, provider string) (string, error) {
-	var info *UserInfo
+func (s *Service) OAuthSignUp(req OAuthRequest, provider string) (string, error) {
+	var info *oauth.UserInfo
 	var err error
 
 	switch provider {
 	case "google":
-		info, err = s.VerifyGoogleToken(req.AccessToken)
+		info, err = oauth.VerifyGoogleToken(req.AccessToken)
 	case "facebook":
-		info, err = s.VerifyFacebookToken(req.AccessToken)
+		info, err = oauth.VerifyFacebookToken(req.AccessToken)
 	default:
 		return "", appErr.NewBadRequest("Unsupported provider", nil)
 	}
@@ -155,6 +155,55 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (string, error) {
 	stateID := utils.GenerateStateID(info)
 
 	return stateID, nil
+}
+
+func (s *Service) OAuthSignIn(req OAuthRequest, provider string) (*JWTAuthResponse, string, error) {
+	var info *oauth.UserInfo
+	var user *models.User
+	var err error
+
+	// For retrieving user data (info) from OAuth provder
+	switch provider {
+	case "google":
+		info, err = oauth.VerifyGoogleToken(req.AccessToken)
+	case "facebook":
+		info, err = oauth.VerifyFacebookToken(req.AccessToken)
+	default:
+		return nil, "", appErr.NewBadRequest("Unsupported provider", nil)
+	}
+	if err != nil {
+		return nil, "", appErr.NewBadRequest("Failed to verify OAuth token", err)
+	}
+
+	// For validating if user account exists in the database
+	switch provider {
+	case "google":
+		user, err = s.repo.FindUserByEmail(info.Email)
+	case "facebook":
+		if strings.HasPrefix(info.ProfilePicture, "https://platform-lookaside.fbsbx.com") {
+			user, err = s.repo.FindFacebookUserByProfilePicturePrefix(info.ProfilePicture)
+		} else {
+			return nil, "", appErr.NewBadRequest("Invalid Facebook profile picture", nil)
+		}
+	default:
+		return nil, "", appErr.NewBadRequest("Unsupported provider", nil)
+	}
+
+	if err != nil {
+		return nil, "", appErr.NewInternal("Account not found, sign up first", err)
+	}
+
+	token, err := utils.GenerateJWT(user)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to generate token", err)
+	}
+
+	userResponse := JWTAuthResponse{
+		ID:   user.ID.String(),
+		Role: string(user.Role),
+	}
+
+	return &userResponse, token, nil
 }
 
 func (s *Service) SendOTP(stateID, phone string) error {
@@ -204,7 +253,7 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 		return nil, "", appErr.NewBadRequest("Invalid or expired state ID", nil)
 	}
 
-	info, ok := oAuthData.Info.(*UserInfo)
+	info, ok := oAuthData.Info.(*oauth.UserInfo)
 	if !ok {
 		return nil, "", appErr.NewInternal("Failed to parse OAuth user info", nil)
 	}
@@ -240,47 +289,4 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 	}
 
 	return &userResponse, token, nil
-}
-
-func (s *Service) VerifyGoogleToken(accessToken string) (*UserInfo, error) {
-	var data GoogleResponseData
-	resp, err := http.Get("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + accessToken)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return nil, appErr.NewInternal("failed to verify Google token", err)
-	}
-	defer resp.Body.Close()
-
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
-	}
-
-	return &UserInfo{
-		Email:          data.Email,
-		FirstName:      data.GivenName,
-		LastName:       data.FamilyName,
-		ProfilePicture: data.Picture,
-		Provider:       "google",
-	}, nil
-}
-
-func (s *Service) VerifyFacebookToken(accessToken string) (*UserInfo, error) {
-	var data FacebookResponseData
-	url := "https://graph.facebook.com/me?fields=id,first_name,last_name,email,picture&access_token=" + accessToken
-	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return nil, appErr.NewInternal("failed to verify Facebook token", err)
-	}
-	defer resp.Body.Close()
-
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, err
-	}
-
-	return &UserInfo{
-		Email:          data.Email,
-		FirstName:      data.FirstName,
-		LastName:       data.LastName,
-		ProfilePicture: data.Picture.Data.URL,
-		Provider:       "facebook",
-	}, nil
 }

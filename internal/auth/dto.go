@@ -37,32 +37,6 @@ type OAuthRequest struct {
 	AccessToken string `json:"accessToken"`
 }
 
-type GoogleResponseData struct {
-	Email      string `json:"email"`
-	GivenName  string `json:"given_name"`
-	FamilyName string `json:"family_name"`
-	Picture    string `json:"picture"`
-}
-
-type FacebookResponseData struct {
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Picture   struct {
-		Data struct {
-			URL string `json:"url"`
-		} `json:"data"`
-	} `json:"picture"`
-}
-
-type UserInfo struct {
-	Email          string
-	FirstName      string
-	LastName       string
-	ProfilePicture string
-	Provider       string
-}
-
 // Send and Validate Phone OTP
 type SendOTPRequest struct {
 	StateID string `json:"stateId"`

@@ -3,12 +3,14 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
-	"regexp"
+	"time"
 
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/geocode"
+	"food-delivery-app-server/pkg/sms"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -28,9 +30,8 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 		return nil, "", appErr.NewBadRequest("Missing required fields", nil)
 	}
 
-	validPhone := regexp.MustCompile(`^\+63[0-9]{10}$`)
-	if !validPhone.MatchString(req.Phone) {
-		return nil, "", appErr.NewBadRequest("Invalid phone number format. Use +63XXXXXXXXXX", nil)
+	if err := sms.ValidatePhone(req.Phone); err != nil {
+		return nil, "", appErr.NewBadRequest("Invalid Phone Number Format", err)
 	}
 
 	if req.Password != req.ConfirmPassword {
@@ -134,7 +135,7 @@ func (s *Service) SignIn(req SignInRequest) (*JWTAuthResponse, string, error) {
 	return &userResponse, token, nil
 }
 
-func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, string, error) {
+func (s *Service) OAuth(req OAuthRequest, provider string) (string, error) {
 	var info *UserInfo
 	var err error
 
@@ -144,48 +145,101 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (*JWTAuthResponse, st
 	case "facebook":
 		info, err = s.VerifyFacebookToken(req.AccessToken)
 	default:
-		return nil, "", appErr.NewBadRequest("Unsupported provider", nil)
+		return "", appErr.NewBadRequest("Unsupported provider", nil)
 	}
 
 	if err != nil {
-		return nil, "", appErr.NewBadRequest("Failed to verify token", err)
+		return "", appErr.NewBadRequest("Failed to verify token", err)
 	}
 
-	user, err := s.repo.FindUserByEmail(info.Email)
+	stateID := utils.GenerateStateID(info)
+
+	return stateID, nil
+}
+
+func (s *Service) SendOTP(stateID, phone string) error {
+	if err := sms.ValidatePhone(phone); err != nil {
+		return appErr.NewBadRequest("Invalid phone number", err)
+	}
+
+	utils.OAuthTempStore.RLock()
+	data, ok := utils.OAuthTempStore.M[stateID]
+	utils.OAuthTempStore.RUnlock()
+	if !ok || time.Now().After(data.ExpiresAt) {
+		return appErr.NewBadRequest("Invalid or Expired State ID", nil)
+	}
+
+	otp := utils.GenerateOTP()
+
+	utils.OtpStore.Lock()
+	utils.OtpStore.M[phone] = otp
+	utils.OtpStore.Unlock()
+
+	// Integrate the SMS provider here
+	log.Printf("OTP Code of the Food Delivery App %s was sent to %s", otp, phone)
+
+	return nil
+}
+
+func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, error) {
+	phone := req.Phone
+	otp := req.OTP
+	stateID := req.StateID
+
+	if err := sms.ValidatePhone(phone); err != nil {
+		return nil, "", appErr.NewBadRequest("Invalid phone number", err)
+	}
+
+	utils.OtpStore.RLock()
+	expectedOTP, ok := utils.OtpStore.M[phone]
+	utils.OtpStore.RUnlock()
+	if !ok || expectedOTP != otp {
+		return nil, "", appErr.NewBadRequest("Invalid or expired OTP", nil)
+	}
+
+	utils.OAuthTempStore.RLock()
+	oAuthData, ok := utils.OAuthTempStore.M[stateID]
+	utils.OAuthTempStore.RUnlock()
+	if !ok || time.Now().After(oAuthData.ExpiresAt) {
+		return nil, "", appErr.NewBadRequest("Invalid or expired state ID", nil)
+	}
+
+	info, ok := oAuthData.Info.(*UserInfo)
+	if !ok {
+		return nil, "", appErr.NewInternal("Failed to parse OAuth user info", nil)
+	}
+
+	userId := utils.GenerateUUID()
+	newUser := &models.User{
+		ID:             userId,
+		FirstName:      info.FirstName,
+		LastName:       info.LastName,
+		Email:          info.Email,
+		ProfilePicture: info.ProfilePicture,
+		Bio:            "",
+		Phone:          phone,
+		Role:           models.Customer,
+		Provider:       info.Provider,
+	}
+
+	createdUser, err := s.repo.CreateUser(newUser)
 	if err != nil {
-		return nil, "", appErr.NewBadRequest("User with that email already exists", nil)
+		return nil, "", appErr.NewInternal("Failed to create user at database", err)
 	}
 
-	newUserID := utils.GenerateUUID()
-
-	if user == nil {
-		user = &models.User{
-			ID:             newUserID,
-			Email:          info.Email,
-			FirstName:      info.FirstName,
-			LastName:       info.LastName,
-			ProfilePicture: info.ProfilePicture,
-			Role:           models.Customer,
-			Provider:       info.Provider,
-		}
-		user, err = s.repo.CreateUser(user)
-		if err != nil {
-			return nil, "", appErr.NewInternal("Failed to create user", err)
-		}
-	}
-
-	token, err := utils.GenerateJWT(user)
+	token, err := utils.GenerateJWT(createdUser)
 	if err != nil {
 		return nil, "", appErr.NewInternal("Failed to generate token", err)
 	}
 
+	utils.CleanMemory(phone, stateID)
+
 	userResponse := JWTAuthResponse{
-		ID:   user.ID.String(),
-		Role: string(user.Role),
+		ID:   createdUser.ID.String(),
+		Role: string(createdUser.Role),
 	}
 
 	return &userResponse, token, nil
-
 }
 
 func (s *Service) VerifyGoogleToken(accessToken string) (*UserInfo, error) {

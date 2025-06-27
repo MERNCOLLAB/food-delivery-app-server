@@ -62,3 +62,15 @@ type UserInfo struct {
 	ProfilePicture string
 	Provider       string
 }
+
+// Send and Validate Phone OTP
+type SendOTPRequest struct {
+	StateID string `json:"stateId"`
+	Phone   string `json:"phone"`
+}
+
+type VerifyOTPRequest struct {
+	StateID string `json:"stateId"`
+	Phone   string `json:"phone"`
+	OTP     string `json:"otp"`
+}

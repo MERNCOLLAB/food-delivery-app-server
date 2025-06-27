@@ -83,6 +83,21 @@ func (h *Handler) OAuth(c *gin.Context) {
 }
 
 func (h *Handler) SendOTP(c *gin.Context) {
+	req, err := http_helper.BindJSON[SendOTPRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := h.service.SendOTP(req.StateID, req.Phone); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "OTP sent to your phone number"})
+}
+
+func (h *Handler) VerifyOTP(c *gin.Context) {
 
 }
 

@@ -62,3 +62,9 @@ type UserInfo struct {
 	ProfilePicture string
 	Provider       string
 }
+
+// Send and Validate Phone OTP
+type SendOTPRequest struct {
+	StateID string
+	Phone   string
+}

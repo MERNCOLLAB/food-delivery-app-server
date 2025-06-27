@@ -14,13 +14,13 @@ type OAuthTempData struct {
 
 var OtpStore = struct {
 	sync.RWMutex
-	m map[string]string
-}{m: make(map[string]string)}
+	M map[string]string
+}{M: make(map[string]string)}
 
 var OAuthTempStore = struct {
 	sync.RWMutex
-	m map[string]OAuthTempData
-}{m: make(map[string]OAuthTempData)}
+	M map[string]OAuthTempData
+}{M: make(map[string]OAuthTempData)}
 
 func GenerateOTP() string {
 	return fmt.Sprintf("%05d", rand.Intn(100000))
@@ -29,7 +29,7 @@ func GenerateOTP() string {
 func GenerateStateID(info interface{}) string {
 	stateID := GenerateUUIDStr()
 	OAuthTempStore.Lock()
-	OAuthTempStore.m[stateID] = OAuthTempData{
+	OAuthTempStore.M[stateID] = OAuthTempData{
 		Info:      info,
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	}

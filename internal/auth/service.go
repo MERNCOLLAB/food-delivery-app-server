@@ -3,12 +3,14 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
-	"regexp"
+	"time"
 
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/geocode"
+	"food-delivery-app-server/pkg/sms"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -28,9 +30,8 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 		return nil, "", appErr.NewBadRequest("Missing required fields", nil)
 	}
 
-	validPhone := regexp.MustCompile(`^\+63[0-9]{10}$`)
-	if !validPhone.MatchString(req.Phone) {
-		return nil, "", appErr.NewBadRequest("Invalid phone number format. Use +63XXXXXXXXXX", nil)
+	if err := sms.ValidatePhone(req.Phone); err != nil {
+		return nil, "", appErr.NewBadRequest("Invalid Phone Number Format", err)
 	}
 
 	if req.Password != req.ConfirmPassword {
@@ -156,8 +157,28 @@ func (s *Service) OAuth(req OAuthRequest, provider string) (string, error) {
 	return stateID, nil
 }
 
-func (s *Service) SendOTP() {
+func (s *Service) SendOTP(stateID, phone string) error {
+	if err := sms.ValidatePhone(phone); err != nil {
+		return appErr.NewBadRequest("Invalid phone number", err)
+	}
 
+	utils.OAuthTempStore.RLock()
+	data, ok := utils.OAuthTempStore.M[stateID]
+	utils.OAuthTempStore.RUnlock()
+	if !ok || time.Now().After(data.ExpiresAt) {
+		return appErr.NewBadRequest("Invalid or expired state ID", nil)
+	}
+
+	otp := utils.GenerateOTP()
+
+	utils.OtpStore.Lock()
+	utils.OtpStore.M[phone] = otp
+	utils.OtpStore.Unlock()
+
+	// Integrate the SMS provider here
+	log.Printf("OTP Code of the Food Delivery App %s was sent to %s", otp, phone)
+
+	return nil
 }
 
 func (s *Service) VerifyOTP() {

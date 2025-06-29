@@ -18,16 +18,46 @@ func GenerateResetCode() (string, time.Time) {
 	return codeStr, expiresAt
 }
 
+func fallback(origValue, fallback string) string {
+	if origValue == "" {
+		return fallback
+	}
+	return origValue
+}
+
 func SendResetCode(to string, code string) error {
 
-	smtpServer := os.Getenv("SMTP_SERVER")
-	smtpPort := os.Getenv("SMTP_PORT")
+	smtpServer := fallback(os.Getenv("SMTP_SERVER"), "smtp.gmail.com")
+	smtpPort := fallback(os.Getenv("SMTP_PORT"), "587")
 	sender := os.Getenv("SMTP_EMAIL")
 	password := os.Getenv("SMTP_PASSWORD")
 
-	subject := "Your Password Reset Code"
-	body := fmt.Sprintf("Your password reset code is: %s . It will expire in 5 minutes.", code)
+	emailBody := fmt.Sprintf(`
+    	<div style="font-family: Arial, sans-serif; line-height:1.6; color: #545454;">
+        	<h1 style="font-size: 24px; font-weight: bold; color:#d417ff">
+            	Food Delivery App Password Reset
+        	</h1>
+        	<p style="font-size:16px; margin-bottom:10px">
+            	Your verification code is
+            	<strong style="font-size: 18px; color:#d417ff;">%s</strong>
+        	</p>
+        	<p style="font-size: 14px; margin-bottom: 20px;">
+            	The code expires in <strong>5 minutes</strong> after this email was sent.
+        	</p>
+        	<p style="font-size: 14px;">
+            	Enter the code in the reset password section of the app to reset your password.
+        	</p>
+        	<hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
+        	<p style="font-size: 12px; color: #999;">
+            	If you did not request a password reset, please ignore this email.
+        	</p>
+    	</div>`, code)
+
+	subject := "Food Delivery App Password Reset"
+	body := emailBody
 	msg := []byte("Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=\"UTF-8\"\r\n" +
 		"To: " + to + "\r\n" +
 		"From: " + sender + "\r\n" +
 		"\r\n" +

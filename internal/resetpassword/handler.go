@@ -30,7 +30,7 @@ func (h *Handler) RequestResetPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"error": "Reset code has been sent to your email"})
+	c.JSON(200, gin.H{"message": "Reset code has been sent to your email"})
 }
 
 func (h *Handler) VerifyResetCode(c *gin.Context) {

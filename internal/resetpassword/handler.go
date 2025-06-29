@@ -34,7 +34,18 @@ func (h *Handler) RequestResetPassword(c *gin.Context) {
 }
 
 func (h *Handler) VerifyResetCode(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Verify Reset Code Endpoint"})
+	req, err := http_helper.BindJSON[VerifyCodeRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err = h.service.VerifyResetCode(*req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Reset Code is valid. Proceed to change your password"})
 }
 
 func (h *Handler) UpdatePassword(c *gin.Context) {

@@ -5,6 +5,7 @@ import (
 	"food-delivery-app-server/pkg/email"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/utils"
+	"time"
 )
 
 type Service struct {
@@ -55,8 +56,34 @@ func (s *Service) RequestResetPassword(req ResetPasswordRequest) error {
 	return nil
 }
 
-func (s *Service) VerifyResetCode() {
+func (s *Service) VerifyResetCode(req VerifyCodeRequest) error {
+	emailAddr := req.Email
+	resetCode := req.ResetCode
 
+	user, err := s.repo.FindUserByEmail(emailAddr)
+	if err != nil {
+		return appErr.NewInternal("Failed to query email in database", err)
+	}
+
+	resetPw, err := s.repo.FindResetCodeByUserId(user.ID.String())
+	if err != nil {
+		return appErr.NewInternal("Failed to find the reset code", err)
+	}
+	if resetPw.IsUsed {
+		return appErr.NewBadRequest("Reset code has already been used", nil)
+	}
+	if time.Now().After(resetPw.ResetCodeExpiry) {
+		return appErr.NewBadRequest("Reset code has expired", nil)
+	}
+	if err := utils.ValidatePassword(resetPw.ResetCode, resetCode); err != nil {
+		return appErr.NewBadRequest("Invalid reset code", nil)
+	}
+
+	if err := s.repo.DeleteResetCodeByID(resetPw.ID.String()); err != nil {
+		return appErr.NewInternal("Failed to delete used reset code", err)
+	}
+
+	return nil
 }
 
 func (s *Service) UpdatePassword() {

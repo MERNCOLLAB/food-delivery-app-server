@@ -1,6 +1,8 @@
 package resetpassword
 
 import (
+	http_helper "food-delivery-app-server/pkg/http"
+
 	"github.com/gin-gonic/gin"
 
 	"gorm.io/gorm"
@@ -17,7 +19,18 @@ func NewHandler(db *gorm.DB) *Handler {
 }
 
 func (h *Handler) RequestResetPassword(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Request Reset Password Endpoint"})
+	req, err := http_helper.BindJSON[ResetPasswordRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err = h.service.RequestResetPassword(*req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Reset code has been sent to your email"})
 }
 
 func (h *Handler) VerifyResetCode(c *gin.Context) {

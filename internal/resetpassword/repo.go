@@ -43,6 +43,6 @@ func (r *Repository) DeleteResetCodeByID(id string) error {
 	return r.db.Delete(&models.PasswordReset{}, "id = ?", id).Error
 }
 
-func (r *Repository) UpdatePassword() {
-
+func (r *Repository) UpdateUserPassword(user *models.User) error {
+	return r.db.Model(user).Update("password", user.Password).Error
 }

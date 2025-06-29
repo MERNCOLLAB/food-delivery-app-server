@@ -49,5 +49,17 @@ func (h *Handler) VerifyResetCode(c *gin.Context) {
 }
 
 func (h *Handler) UpdatePassword(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Update Password Endpoint"})
+	req, err := http_helper.BindJSON[UpdatePasswordRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	email, err := h.service.UpdatePassword(*req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Your password has been updated successfuly", "user": email})
 }

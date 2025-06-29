@@ -86,6 +86,29 @@ func (s *Service) VerifyResetCode(req VerifyCodeRequest) error {
 	return nil
 }
 
-func (s *Service) UpdatePassword() {
+func (s *Service) UpdatePassword(req UpdatePasswordRequest) (*UpdatePasswordResponse, error) {
+	email := req.Email
+	password := req.Password
+	confirmPassword := req.ConfirmPassword
 
+	if password != confirmPassword {
+		return nil, appErr.NewBadRequest("Password does not match", nil)
+	}
+
+	user, err := s.repo.FindUserByEmail(email)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to find user", err)
+	}
+
+	hashedPassword, err := utils.HashPassword(password)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to hash password", err)
+	}
+
+	user.Password = hashedPassword
+	if err := s.repo.UpdateUserPassword(user); err != nil {
+		return nil, appErr.NewInternal("Failed to update password", err)
+	}
+
+	return &UpdatePasswordResponse{Email: user.Email}, nil
 }

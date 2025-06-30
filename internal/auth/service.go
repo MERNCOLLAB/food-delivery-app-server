@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"log"
 	"strings"
 	"time"
 
@@ -224,8 +223,9 @@ func (s *Service) SendOTP(stateID, phone string) error {
 	utils.OtpStore.M[phone] = otp
 	utils.OtpStore.Unlock()
 
-	// Integrate the SMS provider here
-	log.Printf("OTP Code of the Food Delivery App %s was sent to %s", otp, phone)
+	if err := sms.SendOTPTextBee(phone, otp); err != nil {
+		return appErr.NewInternal("Failed to send OTP via SMS", err)
+	}
 
 	return nil
 }

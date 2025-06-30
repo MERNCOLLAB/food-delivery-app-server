@@ -6,6 +6,7 @@ import (
 
 	"food-delivery-app-server/internal/auth"
 	"food-delivery-app-server/internal/menuitem"
+	"food-delivery-app-server/internal/order"
 	"food-delivery-app-server/internal/resetpassword"
 	"food-delivery-app-server/internal/restaurant"
 	"food-delivery-app-server/internal/user"
@@ -64,4 +65,12 @@ func RegisterRoutes(r *gin.Engine) {
 		menuItems.PUT("/:id", menuItemHandler.UpdateMenuItem)
 		menuItems.DELETE("/:id", menuItemHandler.DeleteMenuItem)
 	}
+
+	orderHandler := order.NewHandler(DB)
+	ownerOrder := ownerGroup.Group("/order")
+	{
+		ownerOrder.GET("/:id", orderHandler.GetOrderByRestaurant)
+		ownerOrder.PUT("/:id", orderHandler.UpdateOrderStatus)
+	}
+
 }

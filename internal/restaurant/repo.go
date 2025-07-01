@@ -59,6 +59,10 @@ func (r *Repository) UpdateRestaurant(restaurant *models.Restaurant) error {
 	return r.db.Save(restaurant).Error
 }
 
-func (r *Repository) DeleteRestaurant() {
-
+func (r *Repository) DeleteRestaurant(restoId uuid.UUID) error {
+	var restaurant models.Restaurant
+	if err := r.db.Delete(restaurant, "id = ?", restoId).Error; err != nil {
+		return err
+	}
+	return nil
 }

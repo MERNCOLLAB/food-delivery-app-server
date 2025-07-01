@@ -16,3 +16,15 @@ func DeleteProfilePicIfNotDefault(profilePic string, folderName string) {
 		}
 	}
 }
+
+func DeleteRestaurantImage(imageURL string, folderName string) {
+	if imageURL != "" {
+		publicID := utils.ExtractCloudinaryPublicID(imageURL, folderName)
+		if publicID != "" {
+			err := utils.DeleteImage(publicID)
+			if err != nil {
+				fmt.Println("Failed to delete restaurant image from Cloudinary:", err)
+			}
+		}
+	}
+}

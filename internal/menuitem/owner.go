@@ -6,10 +6,6 @@ func (h *Handler) CreateMenuItem(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Create Menu Item Endpoint"})
 }
 
-func (h *Handler) GetMenuItemByRestaurant(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Menu Items By Restaurant Endpoint"})
-}
-
 func (h *Handler) UpdateMenuItem(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Update Menu Item Endpoint"})
 }

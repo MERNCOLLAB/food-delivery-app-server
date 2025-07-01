@@ -1,6 +1,9 @@
 package restaurant
 
-import "mime/multipart"
+import (
+	"food-delivery-app-server/models"
+	"mime/multipart"
+)
 
 type CreateRestaurantRequest struct {
 	UserId      string
@@ -15,4 +18,29 @@ type CreateRestaurantResponse struct {
 	ID      string `json:"restaurantID"`
 	OwnerID string `json:"userID"`
 	Name    string `json:"name"`
+}
+
+type GetRestaurantResponse struct {
+	Name           *string `json:"name"`
+	OwnerFirstName *string `json:"ownerFirstName"`
+	OwnerLastName  *string `json:"ownerLastName"`
+	Description    *string `json:"description,omitempty"`
+	Phone          *string `json:"phone"`
+	ImageURL       *string `json:"imageURL"`
+}
+
+func NewGetRestaurantResponse(restaurant *models.Restaurant, owner *models.User) GetRestaurantResponse {
+	var firstName, lastName *string
+	if owner != nil {
+		firstName = &owner.FirstName
+		lastName = &owner.LastName
+	}
+	return GetRestaurantResponse{
+		Name:           &restaurant.Name,
+		OwnerFirstName: firstName,
+		OwnerLastName:  lastName,
+		Description:    &restaurant.Description,
+		Phone:          &restaurant.Phone,
+		ImageURL:       &restaurant.ImageURL,
+	}
 }

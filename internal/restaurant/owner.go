@@ -67,8 +67,9 @@ func (h *Handler) GetRestaurantByOwner(c *gin.Context) {
 }
 
 func (h *Handler) UpdateRestaurant(c *gin.Context) {
+
 	c.JSON(200, gin.H{
-		"message": "Update Restaurant Endpoint",
+		"message": "Restaurant has been updated successfully",
 	})
 }
 

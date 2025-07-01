@@ -19,10 +19,18 @@ var allowedTypes = map[string]bool{
 	"image/webp": true,
 }
 
-func UploadImageValidator(key string) gin.HandlerFunc {
+func UploadImageValidator(key string, optional ...bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		isOptional := false
+		if len(optional) > 0 {
+			isOptional = optional[0]
+		}
 		file, header, err := c.Request.FormFile(key)
 		if err != nil {
+			if isOptional {
+				c.Next()
+				return
+			}
 			appError := appErr.NewBadRequest("Image file is required", err)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
 			return

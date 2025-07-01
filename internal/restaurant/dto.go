@@ -19,6 +19,14 @@ type CreateRestaurantResponse struct {
 	Name    string `json:"name"`
 }
 
+type UpdateRestaurantRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Phone       *string `json:"phone,omitempty"`
+	ImageFile   *multipart.File
+	ImageHeader *multipart.FileHeader
+}
+
 type GetRestaurantResponse struct {
 	Name           *string `json:"name"`
 	OwnerFirstName *string `json:"ownerFirstName"`

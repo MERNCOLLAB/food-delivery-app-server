@@ -112,7 +112,21 @@ func (h *Handler) UpdateRestaurant(c *gin.Context) {
 }
 
 func (h *Handler) DeleteRestaurant(c *gin.Context) {
+	restauarantId := c.Param("id")
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = h.service.DeleteRestaurant(userId, restauarantId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Delete Restaurant Endpoint",
+		"message": "Restaurant has been deleted successfully",
 	})
 }

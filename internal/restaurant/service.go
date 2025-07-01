@@ -127,6 +127,29 @@ func (s *Service) UpdateRestaurant(restaurantId string, updateReq UpdateRestaura
 	return updatedResto, nil
 }
 
-func (s *Service) DeleteRestaurant() {
+func (s *Service) DeleteRestaurant(userId, restaurantId string) error {
+	restoId, err := utils.ParseId(restaurantId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid Restaurant ID", err)
+	}
 
+	uid, err := utils.ParseId(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid User ID", err)
+	}
+
+	restaurant, err := s.repo.GetRestaurantByID(restoId)
+	if err != nil {
+		return appErr.NewNotFound("Restaurant not found", err)
+	}
+
+	if restaurant.OwnerID != uid {
+		return appErr.NewUnauthorized("You are not authorized to delete this restaurant", nil)
+	}
+
+	if err := s.repo.DeleteRestaurant(restoId); err != nil {
+		return appErr.NewInternal("Failed to delete the restaurant", err)
+	}
+
+	return nil
 }

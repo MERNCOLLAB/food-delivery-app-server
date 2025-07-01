@@ -51,7 +51,7 @@ func RegisterRoutes(r *gin.Engine) {
 	ownerGroup := r.Group("/owner", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner))
 	restaurants := ownerGroup.Group("/restaurant")
 	{
-		restaurants.POST("/add", restaurantHandler.CreateRestaurant)
+		restaurants.POST("/add", middleware.UploadImageValidator("image"), restaurantHandler.CreateRestaurant)
 		restaurants.GET("/", restaurantHandler.GetRestaurantByOwner)
 		restaurants.PUT("/:id", restaurantHandler.UpdateRestaurant)
 		restaurants.DELETE("/:id", restaurantHandler.DeleteRestaurant)

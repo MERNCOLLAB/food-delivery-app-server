@@ -44,14 +44,26 @@ func (h *Handler) CreateRestaurant(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"message":    "Create Restaurant Endpoint",
+		"message":    "Restaurant has been successfully added",
 		"restaurant": newRestaurant,
 	})
 }
 
 func (h *Handler) GetRestaurantByOwner(c *gin.Context) {
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	restaurantList, err := h.service.GetRestaurantByOwner(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Get Restaurant By Owner Endpoint",
+		"restaurants": restaurantList,
 	})
 }
 

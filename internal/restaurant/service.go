@@ -70,8 +70,25 @@ func (s *Service) CreateRestaurant(createRestaurantData CreateRestaurantRequest)
 	return &filteredRestaurant, nil
 }
 
-func (s *Service) GetRestaurantByOwner() {
+func (s *Service) GetRestaurantByOwner(userId string) ([]GetRestaurantResponse, error) {
+	uid, err := utils.ParseId(userId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid ID", err)
+	}
 
+	restaurantList, err := s.repo.GetRestaurantByOwner(uid)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query restaurants by owner", err)
+	}
+
+	var formattedRestaurantList []GetRestaurantResponse
+	for _, restaurant := range restaurantList {
+		owner, _ := s.repo.GetUserByID(restaurant.OwnerID)
+		resp := NewGetRestaurantResponse(&restaurant, owner)
+		formattedRestaurantList = append(formattedRestaurantList, resp)
+	}
+
+	return formattedRestaurantList, nil
 }
 
 func (s *Service) UpdateRestaurant() {

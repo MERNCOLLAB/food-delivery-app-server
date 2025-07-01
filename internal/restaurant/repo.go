@@ -3,6 +3,7 @@ package restaurant
 import (
 	"food-delivery-app-server/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -30,8 +31,20 @@ func (r *Repository) CreateRestaurant(restaurantData *models.Restaurant) (*model
 	return restaurantData, nil
 }
 
-func (r *Repository) GetRestaurantByOwner() {
+func (r *Repository) GetUserByID(userID uuid.UUID) (*models.User, error) {
+	var user models.User
+	if err := r.db.First(&user, "id = ?", userID).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
 
+func (r *Repository) GetRestaurantByOwner(uid uuid.UUID) ([]models.Restaurant, error) {
+	var restaurant []models.Restaurant
+	if err := r.db.Find(&restaurant, "owner_id = ?", uid).Error; err != nil {
+		return nil, err
+	}
+	return restaurant, nil
 }
 
 func (r *Repository) UpdateRestaurant() {

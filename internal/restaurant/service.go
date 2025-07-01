@@ -4,6 +4,7 @@ import (
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
 
+	"food-delivery-app-server/pkg/media"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -106,6 +107,8 @@ func (s *Service) UpdateRestaurant(restaurantId string, updateReq UpdateRestaura
 	}
 
 	if updateReq.ImageFile != nil && updateReq.ImageHeader != nil {
+		media.DeleteRestaurantImage(restaurant.ImageURL, "restaurants")
+
 		url, _, err := utils.UploadImage(*updateReq.ImageFile, updateReq.ImageHeader, "restaurants")
 		if err != nil {
 			return nil, appErr.NewInternal("Failed to upload the image", err)
@@ -146,6 +149,8 @@ func (s *Service) DeleteRestaurant(userId, restaurantId string) error {
 	if restaurant.OwnerID != uid {
 		return appErr.NewUnauthorized("You are not authorized to delete this restaurant", nil)
 	}
+
+	media.DeleteRestaurantImage(restaurant.ImageURL, "restaurants")
 
 	if err := s.repo.DeleteRestaurant(restoId); err != nil {
 		return appErr.NewInternal("Failed to delete the restaurant", err)

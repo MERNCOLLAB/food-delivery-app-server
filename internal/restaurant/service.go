@@ -15,8 +15,7 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) CreateRestaurant(createRestaurantData CreateRestaurantRequest) (*CreateRestaurantResponse, error) {
-	userId := createRestaurantData.UserId
+func (s *Service) CreateRestaurant(userId string, createRestaurantData CreateRestaurantRequest) (*CreateRestaurantResponse, error) {
 	name := createRestaurantData.Name
 	description := createRestaurantData.Description
 	phone := createRestaurantData.Phone

@@ -29,7 +29,6 @@ func (h *Handler) CreateRestaurant(c *gin.Context) {
 	}
 
 	createRestaurantData := CreateRestaurantRequest{
-		UserId:      userId,
 		Name:        req.Name,
 		Description: req.Description,
 		Phone:       req.Phone,
@@ -37,7 +36,7 @@ func (h *Handler) CreateRestaurant(c *gin.Context) {
 		ImageHeader: imageHeader.(*multipart.FileHeader),
 	}
 
-	newRestaurant, err := h.service.CreateRestaurant(createRestaurantData)
+	newRestaurant, err := h.service.CreateRestaurant(userId, createRestaurantData)
 	if err != nil {
 		c.Error(err)
 		return

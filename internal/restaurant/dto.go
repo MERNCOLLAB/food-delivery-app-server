@@ -6,7 +6,6 @@ import (
 )
 
 type CreateRestaurantRequest struct {
-	UserId      string
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	Phone       string  `json:"phone"`

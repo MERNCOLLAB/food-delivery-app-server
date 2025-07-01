@@ -53,7 +53,7 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		restaurants.POST("/add", middleware.UploadImageValidator("image"), restaurantHandler.CreateRestaurant)
 		restaurants.GET("/", restaurantHandler.GetRestaurantByOwner)
-		restaurants.PUT("/:id", restaurantHandler.UpdateRestaurant)
+		restaurants.PUT("/:id", middleware.UploadImageValidator("image", true), restaurantHandler.UpdateRestaurant)
 		restaurants.DELETE("/:id", restaurantHandler.DeleteRestaurant)
 	}
 

@@ -6,7 +6,6 @@ import (
 )
 
 type CreateRestaurantRequest struct {
-	UserId      string
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	Phone       string  `json:"phone"`
@@ -18,6 +17,21 @@ type CreateRestaurantResponse struct {
 	ID      string `json:"restaurantID"`
 	OwnerID string `json:"userID"`
 	Name    string `json:"name"`
+}
+
+type UpdateRestaurantRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Phone       *string `json:"phone,omitempty"`
+	ImageFile   *multipart.File
+	ImageHeader *multipart.FileHeader
+}
+
+type UpdateRestaurantResponse struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Phone       *string `json:"phone,omitempty"`
+	ImageURL    *string `json:"imageURL,omitempty"`
 }
 
 type GetRestaurantResponse struct {

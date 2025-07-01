@@ -29,7 +29,6 @@ func (h *Handler) CreateRestaurant(c *gin.Context) {
 	}
 
 	createRestaurantData := CreateRestaurantRequest{
-		UserId:      userId,
 		Name:        req.Name,
 		Description: req.Description,
 		Phone:       req.Phone,
@@ -37,7 +36,7 @@ func (h *Handler) CreateRestaurant(c *gin.Context) {
 		ImageHeader: imageHeader.(*multipart.FileHeader),
 	}
 
-	newRestaurant, err := h.service.CreateRestaurant(createRestaurantData)
+	newRestaurant, err := h.service.CreateRestaurant(userId, createRestaurantData)
 	if err != nil {
 		c.Error(err)
 		return
@@ -68,8 +67,47 @@ func (h *Handler) GetRestaurantByOwner(c *gin.Context) {
 }
 
 func (h *Handler) UpdateRestaurant(c *gin.Context) {
+	restaurantId := c.Param("id")
+	imageFile, fileExists := c.Get("imageFile")
+	imageHeader, headerExists := c.Get("imageHeader")
+
+	var imgFilePtr *multipart.File
+	var imgHeaderPtr *multipart.FileHeader
+
+	if fileExists && headerExists {
+		f := imageFile.(multipart.File)
+		h := imageHeader.(*multipart.FileHeader)
+
+		imgFilePtr = &f
+		imgHeaderPtr = h
+	} else {
+		imgFilePtr = nil
+		imgHeaderPtr = nil
+	}
+
+	req, err := http_helper.BindFormJSON[UpdateRestaurantRequest](c, "data")
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	updateRestaurantData := UpdateRestaurantRequest{
+		Name:        req.Name,
+		Description: req.Description,
+		Phone:       req.Phone,
+		ImageFile:   imgFilePtr,
+		ImageHeader: imgHeaderPtr,
+	}
+
+	updatedRestaurant, err := h.service.UpdateRestaurant(restaurantId, updateRestaurantData)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"message": "Update Restaurant Endpoint",
+		"message":    "Restaurant has been updated successfully",
+		"restaurant": updatedRestaurant,
 	})
 }
 

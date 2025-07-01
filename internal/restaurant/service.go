@@ -15,13 +15,12 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) CreateRestaurant(createRestaurantData CreateRestaurantRequest) (*CreateRestaurantResponse, error) {
-	userId := createRestaurantData.UserId
-	name := createRestaurantData.Name
-	description := createRestaurantData.Description
-	phone := createRestaurantData.Phone
-	file := createRestaurantData.ImageFile
-	fileHeader := createRestaurantData.ImageHeader
+func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequest) (*CreateRestaurantResponse, error) {
+	name := createReq.Name
+	description := createReq.Description
+	phone := createReq.Phone
+	file := createReq.ImageFile
+	fileHeader := createReq.ImageHeader
 
 	if phone == "" || name == "" {
 		return nil, appErr.NewBadRequest("Phone and Name is required", nil)
@@ -91,8 +90,41 @@ func (s *Service) GetRestaurantByOwner(userId string) ([]GetRestaurantResponse, 
 	return formattedRestaurantList, nil
 }
 
-func (s *Service) UpdateRestaurant() {
+func (s *Service) UpdateRestaurant(restaurantId string, updateReq UpdateRestaurantRequest) (*UpdateRestaurantResponse, error) {
+	restoId, err := utils.ParseId(restaurantId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid ID", err)
+	}
 
+	restaurant, err := s.repo.GetRestaurantByID(restoId)
+	if err != nil {
+		return nil, appErr.NewNotFound("Restaurant not found", err)
+	}
+
+	if err := utils.Patch(restaurant, &updateReq); err != nil {
+		return nil, appErr.NewInternal("Failed to patch restaurant fields", err)
+	}
+
+	if updateReq.ImageFile != nil && updateReq.ImageHeader != nil {
+		url, _, err := utils.UploadImage(*updateReq.ImageFile, updateReq.ImageHeader)
+		if err != nil {
+			return nil, appErr.NewInternal("Failed to upload the image", err)
+		}
+		restaurant.ImageURL = url
+	}
+
+	if err := s.repo.UpdateRestaurant(restaurant); err != nil {
+		return nil, appErr.NewInternal("Failed to update the restaurant", err)
+	}
+
+	updatedResto := &UpdateRestaurantResponse{
+		Name:        &restaurant.Name,
+		Description: &restaurant.Description,
+		Phone:       &restaurant.Phone,
+		ImageURL:    &restaurant.ImageURL,
+	}
+
+	return updatedResto, nil
 }
 
 func (s *Service) DeleteRestaurant() {

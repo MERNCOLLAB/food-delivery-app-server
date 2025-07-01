@@ -47,8 +47,16 @@ func (r *Repository) GetRestaurantByOwner(uid uuid.UUID) ([]models.Restaurant, e
 	return restaurant, nil
 }
 
-func (r *Repository) UpdateRestaurant() {
+func (r *Repository) GetRestaurantByID(restoId uuid.UUID) (*models.Restaurant, error) {
+	var restaurant models.Restaurant
+	if err := r.db.First(&restaurant, "id = ?", restoId).Error; err != nil {
+		return nil, err
+	}
+	return &restaurant, nil
+}
 
+func (r *Repository) UpdateRestaurant(restaurant *models.Restaurant) error {
+	return r.db.Save(restaurant).Error
 }
 
 func (r *Repository) DeleteRestaurant() {

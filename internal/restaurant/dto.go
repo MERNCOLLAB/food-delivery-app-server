@@ -27,6 +27,13 @@ type UpdateRestaurantRequest struct {
 	ImageHeader *multipart.FileHeader
 }
 
+type UpdateRestaurantResponse struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Phone       *string `json:"phone,omitempty"`
+	ImageURL    *string `json:"imageURL,omitempty"`
+}
+
 type GetRestaurantResponse struct {
 	Name           *string `json:"name"`
 	OwnerFirstName *string `json:"ownerFirstName"`

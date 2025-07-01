@@ -57,7 +57,7 @@ func (s *Service) UpdateProfilePicture(updateProfilePicData UpdateProfilePicture
 
 	media.DeleteProfilePicIfNotDefault(user.ProfilePicture, "profile_pictures")
 
-	url, _, err := utils.UploadImage(file, fileHeader)
+	url, _, err := utils.UploadImage(file, fileHeader, "profile_pictures")
 	if err != nil {
 		return "", appErr.NewInternal("Failed to upload the image", err)
 	}

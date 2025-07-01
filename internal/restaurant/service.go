@@ -40,7 +40,7 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		return nil, appErr.NewBadRequest("Restaurant Name already exist", nil)
 	}
 
-	url, _, err := utils.UploadImage(file, fileHeader)
+	url, _, err := utils.UploadImage(file, fileHeader, "restaurants")
 	if err != nil {
 		return nil, appErr.NewInternal("Failed to upload the image", err)
 	}
@@ -106,7 +106,7 @@ func (s *Service) UpdateRestaurant(restaurantId string, updateReq UpdateRestaura
 	}
 
 	if updateReq.ImageFile != nil && updateReq.ImageHeader != nil {
-		url, _, err := utils.UploadImage(*updateReq.ImageFile, updateReq.ImageHeader)
+		url, _, err := utils.UploadImage(*updateReq.ImageFile, updateReq.ImageHeader, "restaurants")
 		if err != nil {
 			return nil, appErr.NewInternal("Failed to upload the image", err)
 		}

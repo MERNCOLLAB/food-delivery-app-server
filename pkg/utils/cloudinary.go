@@ -19,7 +19,7 @@ func getCloudinaryURL() string {
 	return fmt.Sprintf("cloudinary://%s:%s@%s", apiKey, apiSecret, cloudName)
 }
 
-func UploadImage(file multipart.File, fileHeader *multipart.FileHeader) (string, string, error) {
+func UploadImage(file multipart.File, fileHeader *multipart.FileHeader, folder string) (string, string, error) {
 	cld, err := cloudinary.NewFromURL(getCloudinaryURL())
 	if err != nil {
 		return "", "", err
@@ -28,7 +28,7 @@ func UploadImage(file multipart.File, fileHeader *multipart.FileHeader) (string,
 	ctx := context.Background()
 	uploadResult, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{
 		PublicID: fileHeader.Filename,
-		Folder:   "profile_pictures",
+		Folder:   folder,
 	})
 	if err != nil {
 		return "", "", err

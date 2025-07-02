@@ -60,10 +60,14 @@ func RegisterRoutes(r *gin.Engine) {
 	menuItemHandler := menuitem.NewHandler(DB)
 	menuItems := ownerGroup.Group("/menu-item")
 	{
-		menuItems.POST("/add", menuItemHandler.CreateMenuItem)
-		menuItems.GET("/", menuItemHandler.GetMenuItemByRestaurant)
+		menuItems.POST("/add/restaurant/:id", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
 		menuItems.PUT("/:id", menuItemHandler.UpdateMenuItem)
 		menuItems.DELETE("/:id", menuItemHandler.DeleteMenuItem)
+	}
+
+	ownerAndCust := r.Group("/menu-item", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
+	{
+		ownerAndCust.GET("/:id", menuItemHandler.GetMenuItemByRestaurant)
 	}
 
 	orderHandler := order.NewHandler(DB)
@@ -72,5 +76,4 @@ func RegisterRoutes(r *gin.Engine) {
 		ownerOrder.GET("/:id", orderHandler.GetOrderByRestaurant)
 		ownerOrder.PUT("/:id", orderHandler.UpdateOrderStatus)
 	}
-
 }

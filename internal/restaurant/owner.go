@@ -32,6 +32,7 @@ func (h *Handler) CreateRestaurant(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Phone:       req.Phone,
+		Address:     req.Address,
 		ImageFile:   imageFile.(multipart.File),
 		ImageHeader: imageHeader.(*multipart.FileHeader),
 	}

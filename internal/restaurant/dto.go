@@ -9,6 +9,7 @@ type CreateRestaurantRequest struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 	Phone       string  `json:"phone"`
+	Address     string  `json:"address"`
 	ImageFile   multipart.File
 	ImageHeader *multipart.FileHeader
 }
@@ -17,6 +18,7 @@ type CreateRestaurantResponse struct {
 	ID      string `json:"restaurantID"`
 	OwnerID string `json:"userID"`
 	Name    string `json:"name"`
+	Address string `json:"address"`
 }
 
 type UpdateRestaurantRequest struct {

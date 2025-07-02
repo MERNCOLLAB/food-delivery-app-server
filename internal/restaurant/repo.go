@@ -31,6 +31,13 @@ func (r *Repository) CreateRestaurant(restaurantData *models.Restaurant) (*model
 	return restaurantData, nil
 }
 
+func (r *Repository) CreateAddress(address *models.Address) (*models.Address, error) {
+	if err := r.db.Create(address).Error; err != nil {
+		return nil, err
+	}
+	return address, nil
+}
+
 func (r *Repository) GetUserByID(userID uuid.UUID) (*models.User, error) {
 	var user models.User
 	if err := r.db.First(&user, "id = ?", userID).Error; err != nil {

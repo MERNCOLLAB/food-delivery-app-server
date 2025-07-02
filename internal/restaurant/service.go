@@ -1,10 +1,14 @@
 package restaurant
 
 import (
+	"context"
+
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
 
+	"food-delivery-app-server/pkg/geocode"
 	"food-delivery-app-server/pkg/media"
+	"food-delivery-app-server/pkg/sms"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -20,11 +24,16 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 	name := createReq.Name
 	description := createReq.Description
 	phone := createReq.Phone
+	address := createReq.Address
 	file := createReq.ImageFile
 	fileHeader := createReq.ImageHeader
 
-	if phone == "" || name == "" {
-		return nil, appErr.NewBadRequest("Phone and Name is required", nil)
+	if phone == "" || name == "" || address == "" {
+		return nil, appErr.NewBadRequest("Phone, Address, and Name is required", nil)
+	}
+
+	if err := sms.ValidatePhone(phone); err != nil {
+		return nil, appErr.NewBadRequest("Invalid Phone Number Format", err)
 	}
 
 	uid, err := utils.ParseId(userId)
@@ -46,6 +55,7 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		return nil, appErr.NewInternal("Failed to upload the image", err)
 	}
 	restaurantID := utils.GenerateUUID()
+	addressId := utils.GenerateUUID()
 
 	restaurantData := &models.Restaurant{
 		ID:          restaurantID,
@@ -54,6 +64,26 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		Description: utils.SafeString(description, ""),
 		Phone:       phone,
 		ImageURL:    url,
+	}
+
+	ctx := context.Background()
+	lat, long, err := geocode.Geocode(ctx, address)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to geocode the provided address", err)
+	}
+
+	newAddress := &models.Address{
+		ID:        addressId,
+		UserID:    &uid,
+		Address:   address,
+		IsDefault: true,
+		Latitude:  lat,
+		Longitude: long,
+	}
+
+	newAddr, err := s.repo.CreateAddress(newAddress)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to create address at the database", err)
 	}
 
 	newRestaurant, err := s.repo.CreateRestaurant(restaurantData)
@@ -65,6 +95,7 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		ID:      newRestaurant.ID.String(),
 		OwnerID: newRestaurant.OwnerID.String(),
 		Name:    newRestaurant.Name,
+		Address: newAddr.Address,
 	}
 
 	return &filteredRestaurant, nil

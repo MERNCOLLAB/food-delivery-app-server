@@ -152,10 +152,31 @@ func (s *Service) UpdateRestaurant(restaurantId string, updateReq UpdateRestaura
 		return nil, appErr.NewInternal("Failed to update the restaurant", err)
 	}
 
+	var updatedAddress *string
+	if updateReq.Address != nil && *updateReq.Address != "" {
+		ctx := context.Background()
+		lat, long, err := geocode.Geocode(ctx, *updateReq.Address)
+		if err != nil {
+			return nil, appErr.NewInternal("Failed to geocode the provided address", err)
+		}
+
+		addr, err := s.repo.UpdateRestaurantAddressByRestaurantID(restaurant.ID, *updateReq.Address, lat, long)
+		if err != nil {
+			return nil, appErr.NewInternal("Failed to update address at the database", err)
+		}
+		updatedAddress = &addr.Address
+	} else {
+		addr, _ := s.repo.GetAddressByRestaurantID(restaurant.ID)
+		if addr != nil {
+			updatedAddress = &addr.Address
+		}
+	}
+
 	updatedResto := &UpdateRestaurantResponse{
 		Name:        &restaurant.Name,
 		Description: &restaurant.Description,
 		Phone:       &restaurant.Phone,
+		Address:     updatedAddress,
 		ImageURL:    &restaurant.ImageURL,
 	}
 

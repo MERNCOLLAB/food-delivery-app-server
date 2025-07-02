@@ -38,6 +38,30 @@ func (r *Repository) CreateAddress(address *models.Address) (*models.Address, er
 	return address, nil
 }
 
+func (r *Repository) GetAddressByRestaurantID(restaurantID uuid.UUID) (*models.Address, error) {
+	var address models.Address
+	if err := r.db.First(&address, "restaurant_id = ?", restaurantID).Error; err != nil {
+		return nil, err
+	}
+	return &address, nil
+}
+
+func (r *Repository) UpdateRestaurantAddressByRestaurantID(restaurantID uuid.UUID, newAddress string, lat, long float64) (*models.Address, error) {
+	var address models.Address
+	if err := r.db.First(&address, "restaurant_id = ?", restaurantID).Error; err != nil {
+		return nil, err
+	}
+
+	address.Address = newAddress
+	address.Latitude = lat
+	address.Longitude = long
+
+	if err := r.db.Save(&address).Error; err != nil {
+		return nil, err
+	}
+	return &address, nil
+}
+
 func (r *Repository) GetUserByID(userID uuid.UUID) (*models.User, error) {
 	var user models.User
 	if err := r.db.First(&user, "id = ?", userID).Error; err != nil {

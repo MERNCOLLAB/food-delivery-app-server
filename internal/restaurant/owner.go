@@ -96,6 +96,7 @@ func (h *Handler) UpdateRestaurant(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Phone:       req.Phone,
+		Address:     req.Address,
 		ImageFile:   imgFilePtr,
 		ImageHeader: imgHeaderPtr,
 	}

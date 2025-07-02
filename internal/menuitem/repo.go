@@ -44,6 +44,23 @@ func (r *Repository) GetMenuItemByID(menuItemID uuid.UUID) (*models.MenuItem, er
 	return &menuItem, nil
 }
 
+func (r *Repository) GetRestaurantOwnerIDByID(restaurantID uuid.UUID) (uuid.UUID, error) {
+	var ownerIDStr string
+	err := r.db.
+		Model(&models.Restaurant{}).
+		Select("owner_id").
+		Where("id = ?", restaurantID).
+		Scan(&ownerIDStr).Error
+	if err != nil {
+		return uuid.Nil, err
+	}
+	ownerID, err := uuid.Parse(ownerIDStr)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return ownerID, nil
+}
+
 func (r *Repository) GetMenuItemByRestaurant() {
 
 }
@@ -52,6 +69,9 @@ func (r *Repository) UpdateMenuItem(menuItem *models.MenuItem) error {
 	return r.db.Save(menuItem).Error
 }
 
-func (r *Repository) DeleteMenuItem() {
-
+func (r *Repository) DeleteMenuItem(menuId uuid.UUID) error {
+	if err := r.db.Delete(&models.MenuItem{}, "id = ?", menuId).Error; err != nil {
+		return err
+	}
+	return nil
 }

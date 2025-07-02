@@ -115,6 +115,37 @@ func (s *Service) UpdateMenuItem(menuItemId string, updateReq UpdateMenuItemRequ
 	return updatedMenu, nil
 }
 
-func (s *Service) DeleteMenuItem() {
+func (s *Service) DeleteMenuItem(userId, menuItemId string) error {
+	menuId, err := utils.ParseId(menuItemId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid Menu Item ID", err)
+	}
 
+	uid, err := utils.ParseId(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid User ID", err)
+	}
+
+	menuItem, err := s.repo.GetMenuItemByID(menuId)
+	if err != nil {
+		return appErr.NewNotFound("Menu Item not found", err)
+	}
+
+	restoId := menuItem.RestaurantID
+
+	ownerID, err := s.repo.GetRestaurantOwnerIDByID(restoId)
+	if err != nil {
+		return appErr.NewNotFound("Menu Item not found", err)
+	}
+	if ownerID != uid {
+		return appErr.NewUnauthorized("You are not authorized to delete this restaurant", nil)
+	}
+
+	media.DeleteImage("menu item", menuItem.ImageURL, "menu-items")
+
+	if err := s.repo.DeleteMenuItem(menuId); err != nil {
+		return appErr.NewInternal("Failed to delete the menu item", err)
+	}
+
+	return nil
 }

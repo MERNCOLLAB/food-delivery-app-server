@@ -66,6 +66,11 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		ImageURL:    url,
 	}
 
+	newRestaurant, err := s.repo.CreateRestaurant(restaurantData)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to create the restaurant at the database", err)
+	}
+
 	ctx := context.Background()
 	lat, long, err := geocode.Geocode(ctx, address)
 	if err != nil {
@@ -73,22 +78,18 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 	}
 
 	newAddress := &models.Address{
-		ID:        addressId,
-		UserID:    &uid,
-		Address:   address,
-		IsDefault: true,
-		Latitude:  lat,
-		Longitude: long,
+		ID:           addressId,
+		UserID:       &uid,
+		RestaurantID: &restaurantID,
+		Address:      address,
+		IsDefault:    true,
+		Latitude:     lat,
+		Longitude:    long,
 	}
 
 	newAddr, err := s.repo.CreateAddress(newAddress)
 	if err != nil {
 		return nil, appErr.NewInternal("Failed to create address at the database", err)
-	}
-
-	newRestaurant, err := s.repo.CreateRestaurant(restaurantData)
-	if err != nil {
-		return nil, appErr.NewInternal("Failed to create the restaurant at the database", err)
 	}
 
 	filteredRestaurant := CreateRestaurantResponse{

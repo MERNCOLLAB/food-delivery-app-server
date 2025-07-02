@@ -25,6 +25,7 @@ type UpdateRestaurantRequest struct {
 	Name        *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Phone       *string `json:"phone,omitempty"`
+	Address     *string `json:"address,omitempty"`
 	ImageFile   *multipart.File
 	ImageHeader *multipart.FileHeader
 }
@@ -33,6 +34,7 @@ type UpdateRestaurantResponse struct {
 	Name        *string `json:"name,omitempty"`
 	Description *string `json:"description,omitempty"`
 	Phone       *string `json:"phone,omitempty"`
+	Address     *string `json:"address,omitempty"`
 	ImageURL    *string `json:"imageURL,omitempty"`
 }
 

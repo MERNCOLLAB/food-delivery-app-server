@@ -61,7 +61,7 @@ func RegisterRoutes(r *gin.Engine) {
 	menuItems := ownerGroup.Group("/menu-item")
 	{
 		menuItems.POST("/add/restaurant/:id", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
-		menuItems.PUT("/:id", menuItemHandler.UpdateMenuItem)
+		menuItems.PUT("/:id", middleware.UploadImageValidator("image", true), menuItemHandler.UpdateMenuItem)
 		menuItems.DELETE("/:id", menuItemHandler.DeleteMenuItem)
 	}
 

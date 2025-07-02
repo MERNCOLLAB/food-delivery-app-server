@@ -3,6 +3,7 @@ package menuitem
 import (
 	"food-delivery-app-server/models"
 	appErr "food-delivery-app-server/pkg/errors"
+	"food-delivery-app-server/pkg/media"
 	"food-delivery-app-server/pkg/utils"
 )
 
@@ -76,7 +77,42 @@ func (s *Service) GetMenuItemByRestaurant() {
 
 }
 
-func (s *Service) UpdateMenuItem() {
+func (s *Service) UpdateMenuItem(menuItemId string, updateReq UpdateMenuItemRequest) (*UpdateMenuItemResponse, error) {
+	menuId, err := utils.ParseId(menuItemId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid ID", err)
+	}
+
+	menuItem, err := s.repo.GetMenuItemByID(menuId)
+	if err != nil {
+		return nil, appErr.NewNotFound("Menu item not found", err)
+	}
+
+	if err := utils.Patch(menuItem, &updateReq); err != nil {
+		return nil, appErr.NewInternal("Failed to patch menu item fields", err)
+	}
+
+	if updateReq.ImageFile != nil && updateReq.ImageHeader != nil {
+		media.DeleteImage("menu item", menuItem.ImageURL, "menu-items")
+		url, _, err := utils.UploadImage(*updateReq.ImageFile, updateReq.ImageHeader, "menu-items")
+		if err != nil {
+			return nil, appErr.NewInternal("Failed to upload the image", err)
+		}
+		menuItem.ImageURL = url
+	}
+
+	if err := s.repo.UpdateMenuItem(menuItem); err != nil {
+		return nil, appErr.NewInternal("Failed to update the menu item", err)
+	}
+
+	updatedMenu := &UpdateMenuItemResponse{
+		Name:        &menuItem.Name,
+		Description: &menuItem.Description,
+		Price:       &menuItem.Price,
+		ImageURL:    &menuItem.ImageURL,
+	}
+
+	return updatedMenu, nil
 }
 
 func (s *Service) DeleteMenuItem() {

@@ -36,12 +36,20 @@ func (r *Repository) CreateMenuItem(menuItemData *models.MenuItem) (*models.Menu
 	return menuItemData, nil
 }
 
+func (r *Repository) GetMenuItemByID(menuItemID uuid.UUID) (*models.MenuItem, error) {
+	var menuItem models.MenuItem
+	if err := r.db.First(&menuItem, "id = ?", menuItemID).Error; err != nil {
+		return nil, err
+	}
+	return &menuItem, nil
+}
+
 func (r *Repository) GetMenuItemByRestaurant() {
 
 }
 
-func (r *Repository) UpdateMenuItem() {
-
+func (r *Repository) UpdateMenuItem(menuItem *models.MenuItem) error {
+	return r.db.Save(menuItem).Error
 }
 
 func (r *Repository) DeleteMenuItem() {

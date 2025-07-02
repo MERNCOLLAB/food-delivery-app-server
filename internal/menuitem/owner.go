@@ -87,5 +87,19 @@ func (h *Handler) UpdateMenuItem(c *gin.Context) {
 }
 
 func (h *Handler) DeleteMenuItem(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Delete Menu Item Endpoint"})
+	menuItemId := c.Param("id")
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = h.service.DeleteMenuItem(userId, menuItemId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Food item has been deleted successfully"})
 }

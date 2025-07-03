@@ -67,7 +67,7 @@ func RegisterRoutes(r *gin.Engine) {
 
 	ownerAndCust := r.Group("/menu-item", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
 	{
-		ownerAndCust.GET("/:id", menuItemHandler.GetMenuItemByRestaurant)
+		ownerAndCust.GET("/restaurant/:id", menuItemHandler.GetMenuItemByRestaurant)
 	}
 
 	orderHandler := order.NewHandler(DB)

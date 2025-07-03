@@ -61,8 +61,14 @@ func (r *Repository) GetRestaurantOwnerIDByID(restaurantID uuid.UUID) (uuid.UUID
 	return ownerID, nil
 }
 
-func (r *Repository) GetMenuItemByRestaurant() {
-
+func (r *Repository) GetMenuItemByRestaurant(restoId uuid.UUID) ([]models.MenuItem, error) {
+	var menuItems []models.MenuItem
+	if err := r.db.Where("restaurant_id = ?", restoId).
+		Find(&menuItems).
+		Error; err != nil {
+		return nil, err
+	}
+	return menuItems, nil
 }
 
 func (r *Repository) UpdateMenuItem(menuItem *models.MenuItem) error {

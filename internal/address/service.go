@@ -8,6 +8,10 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
+func (s *Service) CreateAddress() {
+
+}
+
 func (s *Service) GetAddress() {
 
 }

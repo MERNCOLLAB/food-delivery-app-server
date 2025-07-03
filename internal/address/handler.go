@@ -15,6 +15,10 @@ func NewHandler(db *gorm.DB) *Handler {
 	return &Handler{service: service}
 }
 
+func (h *Handler) CreateAddress(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "Create Address Endpoint"})
+}
+
 func (h *Handler) GetAddress(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Get Address Endpoint"})
 }

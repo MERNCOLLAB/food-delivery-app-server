@@ -159,3 +159,7 @@ func (s *Service) DeleteMenuItem(userId, menuItemId string) error {
 
 	return nil
 }
+
+func (s *Service) GetMoreMenuItemDetails() {
+
+}

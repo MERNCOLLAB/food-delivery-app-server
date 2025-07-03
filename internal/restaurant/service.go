@@ -215,3 +215,11 @@ func (s *Service) DeleteRestaurant(userId, restaurantId string) error {
 
 	return nil
 }
+
+func (s *Service) GetAllRestaurants() {
+
+}
+
+func (s *Service) GetMoreRestaurantDetails() {
+
+}

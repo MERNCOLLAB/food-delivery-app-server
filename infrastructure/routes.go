@@ -60,9 +60,9 @@ func RegisterRoutes(r *gin.Engine) {
 
 	ownerAndCustAddress := r.Group("/address", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
 	{
-		ownerAndCustAddress.GET("/", addressHandler.GetAddress)
-		ownerAndCustAddress.PUT("/:id", addressHandler.UpdateAddress)
-		ownerAndCustAddress.DELETE("/:id", addressHandler.DeleteAddress)
+		ownerAndCustAddress.GET("/", addressHandler.GetAddress)          //not yet functional
+		ownerAndCustAddress.PUT("/:id", addressHandler.UpdateAddress)    //not yet functional
+		ownerAndCustAddress.DELETE("/:id", addressHandler.DeleteAddress) //not yet functional
 	}
 
 	ownerGroup := r.Group("/owner", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner))
@@ -84,32 +84,31 @@ func RegisterRoutes(r *gin.Engine) {
 
 	ownerOrder := ownerGroup.Group("/order")
 	{
-		ownerOrder.GET("/:id", orderHandler.GetOrderByRestaurant)
-		ownerOrder.PUT("/:id", orderHandler.UpdateOrderStatus)
+		ownerOrder.GET("/:id", orderHandler.GetOrderByRestaurant) //not yet functional
+		ownerOrder.PUT("/:id", orderHandler.UpdateOrderStatus)    //not yet functional
 	}
 
 	customerGroup := r.Group("/customer", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Customer))
 	customerRestaurants := customerGroup.Group("/restaurant")
 	{
-		customerRestaurants.GET("/")
-		customerRestaurants.GET("/:id/menu-items")
+		customerRestaurants.GET("/", restaurantHandler.GetAllRestaurants)                      //not yet functional
+		customerRestaurants.GET("/:id/menu-items", restaurantHandler.GetMoreRestaurantDetails) //not yet functional
 	}
 
 	customerMenuItems := customerGroup.Group("/menu-item")
 	{
-		customerMenuItems.GET("/restaurant/:id")
-		customerMenuItems.GET("/:id")
+		customerMenuItems.GET("/:id", menuItemHandler.GetMoreMenuItemDetails) //not yet functional
 	}
 
 	customerOrder := customerGroup.Group("/order")
 	{
-		customerOrder.POST("/restaurant/:id")
-		customerOrder.GET("/")
-		customerOrder.PUT("/:id/cancel")
+		customerOrder.POST("/restaurant/:id", orderHandler.GetOrderByRestaurant) //not yet functional
+		customerOrder.GET("/", orderHandler.GetAllPersonalOrders)                //not yet functional
+		customerOrder.PUT("/:id/cancel", orderHandler.CancelOrder)               //not yet functional
 	}
 
 	customerAddress := customerGroup.Group("/address")
 	{
-		customerAddress.POST("/")
+		customerAddress.POST("/", addressHandler.CreateAddress) //not yet functional
 	}
 }

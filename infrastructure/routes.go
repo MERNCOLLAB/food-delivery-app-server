@@ -4,6 +4,7 @@ import (
 	"food-delivery-app-server/middleware"
 	"food-delivery-app-server/models"
 
+	"food-delivery-app-server/internal/address"
 	"food-delivery-app-server/internal/auth"
 	"food-delivery-app-server/internal/menuitem"
 	"food-delivery-app-server/internal/order"
@@ -47,6 +48,7 @@ func RegisterRoutes(r *gin.Engine) {
 		resetPasswordGroup.PUT("/update", resetPasswordHandler.UpdatePassword)
 	}
 
+	addressHandler := address.NewHandler(DB)
 	restaurantHandler := restaurant.NewHandler(DB)
 	menuItemHandler := menuitem.NewHandler(DB)
 	orderHandler := order.NewHandler(DB)
@@ -58,9 +60,9 @@ func RegisterRoutes(r *gin.Engine) {
 
 	ownerAndCustAddress := r.Group("/address", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
 	{
-		ownerAndCustAddress.GET("/")
-		ownerAndCustAddress.PUT("/:id")
-		ownerAndCustAddress.DELETE("/:id")
+		ownerAndCustAddress.GET("/", addressHandler.GetAddress)
+		ownerAndCustAddress.PUT("/:id", addressHandler.UpdateAddress)
+		ownerAndCustAddress.DELETE("/:id", addressHandler.DeleteAddress)
 	}
 
 	ownerGroup := r.Group("/owner", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner))

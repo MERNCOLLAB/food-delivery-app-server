@@ -48,32 +48,66 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	restaurantHandler := restaurant.NewHandler(DB)
-	ownerGroup := r.Group("/owner", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner))
-	restaurants := ownerGroup.Group("/restaurant")
-	{
-		restaurants.POST("/add", middleware.UploadImageValidator("image"), restaurantHandler.CreateRestaurant)
-		restaurants.GET("/", restaurantHandler.GetRestaurantByOwner)
-		restaurants.PUT("/:id", middleware.UploadImageValidator("image", true), restaurantHandler.UpdateRestaurant)
-		restaurants.DELETE("/:id", restaurantHandler.DeleteRestaurant)
-	}
-
 	menuItemHandler := menuitem.NewHandler(DB)
-	menuItems := ownerGroup.Group("/menu-item")
-	{
-		menuItems.POST("/add/restaurant/:id", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
-		menuItems.PUT("/:id", middleware.UploadImageValidator("image", true), menuItemHandler.UpdateMenuItem)
-		menuItems.DELETE("/:id", menuItemHandler.DeleteMenuItem)
-	}
-
-	ownerAndCust := r.Group("/menu-item", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
-	{
-		ownerAndCust.GET("/restaurant/:id", menuItemHandler.GetMenuItemByRestaurant)
-	}
-
 	orderHandler := order.NewHandler(DB)
+
+	ownerAndCustMenuItem := r.Group("/menu-item", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
+	{
+		ownerAndCustMenuItem.GET("/restaurant/:id", menuItemHandler.GetMenuItemByRestaurant)
+	}
+
+	ownerAndCustAddress := r.Group("/address", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
+	{
+		ownerAndCustAddress.GET("/")
+		ownerAndCustAddress.PUT("/:id")
+		ownerAndCustAddress.DELETE("/:id")
+	}
+
+	ownerGroup := r.Group("/owner", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner))
+	ownerRestaurants := ownerGroup.Group("/restaurant")
+	{
+		ownerRestaurants.POST("/", middleware.UploadImageValidator("image"), restaurantHandler.CreateRestaurant)
+		ownerRestaurants.GET("/", restaurantHandler.GetRestaurantByOwner)
+		ownerRestaurants.PUT("/:id", middleware.UploadImageValidator("image", true), restaurantHandler.UpdateRestaurant)
+		ownerRestaurants.DELETE("/:id", restaurantHandler.DeleteRestaurant)
+
+		ownerRestaurants.POST("/:id/menu-item", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
+	}
+
+	ownerMenuItems := ownerGroup.Group("/menu-item")
+	{
+		ownerMenuItems.PUT("/:id", middleware.UploadImageValidator("image", true), menuItemHandler.UpdateMenuItem)
+		ownerMenuItems.DELETE("/:id", menuItemHandler.DeleteMenuItem)
+	}
+
 	ownerOrder := ownerGroup.Group("/order")
 	{
 		ownerOrder.GET("/:id", orderHandler.GetOrderByRestaurant)
 		ownerOrder.PUT("/:id", orderHandler.UpdateOrderStatus)
+	}
+
+	customerGroup := r.Group("/customer", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Customer))
+	customerRestaurants := customerGroup.Group("/restaurant")
+	{
+		customerRestaurants.GET("/")
+		customerRestaurants.GET("/:id/menu-items")
+	}
+
+	customerMenuItems := customerGroup.Group("/menu-item")
+	{
+		customerMenuItems.GET("/restaurant/:id")
+		customerMenuItems.GET("/:id")
+	}
+
+	customerOrder := customerGroup.Group("/order")
+	{
+		customerOrder.POST("/restaurant/:id")
+		customerOrder.GET("/")
+		customerOrder.PUT("/:id/cancel")
+	}
+
+	customerAddress := customerGroup.Group("/address")
+	{
+		customerAddress.POST("/")
 	}
 }

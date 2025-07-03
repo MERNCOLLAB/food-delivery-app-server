@@ -73,8 +73,18 @@ func (s *Service) CreateMenuItem(restaurantId string, createReq CreateMenuItemRe
 	return &filteredMenuItem, nil
 }
 
-func (s *Service) GetMenuItemByRestaurant() {
+func (s *Service) GetMenuItemByRestaurant(restaurantId string) ([]GetMenuItemByRestaurantResponse, error) {
+	restoId, err := utils.ParseId(restaurantId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid ID", err)
+	}
 
+	menuItems, err := s.repo.GetMenuItemByRestaurant(restoId)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query menu items by restaurant", err)
+	}
+
+	return NewGetMenuItemByRestoResponse(menuItems), nil
 }
 
 func (s *Service) UpdateMenuItem(menuItemId string, updateReq UpdateMenuItemRequest) (*UpdateMenuItemResponse, error) {

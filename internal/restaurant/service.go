@@ -28,6 +28,7 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 	file := createReq.ImageFile
 	fileHeader := createReq.ImageHeader
 
+	// Data Validation and Preparations
 	if phone == "" || name == "" || address == "" {
 		return nil, appErr.NewBadRequest("Phone, Address, and Name is required", nil)
 	}
@@ -50,13 +51,20 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		return nil, appErr.NewBadRequest("Restaurant Name already exist", nil)
 	}
 
+	ctx := context.Background()
+	lat, long, err := geocode.Geocode(ctx, address)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to geocode the provided address", err)
+	}
+
+	// Upload Image
 	url, _, err := utils.UploadImage(file, fileHeader, "restaurants")
 	if err != nil {
 		return nil, appErr.NewInternal("Failed to upload the image", err)
 	}
-	restaurantID := utils.GenerateUUID()
-	addressId := utils.GenerateUUID()
 
+	// Restaurant Data Preparation
+	restaurantID := utils.GenerateUUID()
 	restaurantData := &models.Restaurant{
 		ID:          restaurantID,
 		OwnerID:     uid,
@@ -71,12 +79,8 @@ func (s *Service) CreateRestaurant(userId string, createReq CreateRestaurantRequ
 		return nil, appErr.NewInternal("Failed to create the restaurant at the database", err)
 	}
 
-	ctx := context.Background()
-	lat, long, err := geocode.Geocode(ctx, address)
-	if err != nil {
-		return nil, appErr.NewInternal("Failed to geocode the provided address", err)
-	}
-
+	// Address Data Preparation
+	addressId := utils.GenerateUUID()
 	newAddress := &models.Address{
 		ID:           addressId,
 		UserID:       &uid,

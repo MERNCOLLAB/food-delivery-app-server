@@ -16,5 +16,13 @@ func NewHandler(db *gorm.DB) *Handler {
 }
 
 func (h *Handler) GetMenuItemByRestaurant(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Menu Items By Restaurant Endpoint"})
+	restaurantId := c.Param("id")
+
+	menuItems, err := h.service.GetMenuItemByRestaurant(restaurantId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"menuItems": menuItems})
 }

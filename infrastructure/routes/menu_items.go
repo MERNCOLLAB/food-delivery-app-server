@@ -20,6 +20,11 @@ func RegisterMenuItemsRoutes(r *gin.Engine, DB *gorm.DB) {
 		owner.DELETE("/", menuItemHandler.DeleteMenuItem)
 	}
 
+	customer := r.Group("/", middleware.RequireRoles(models.Customer))
+	{
+		customer.GET("/:id", menuItemHandler.GetMoreMenuItemDetails) // not yet functional
+	}
+
 	ownerAndCust := menuItem.Group("/", middleware.RequireRoles(models.Owner, models.Customer))
 	{
 		ownerAndCust.GET("/restaurant/:id", menuItemHandler.GetMenuItemByRestaurant)

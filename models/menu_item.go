@@ -12,6 +12,7 @@ type MenuItem struct {
 	Name         string    `gorm:"type:varchar(100);not null;" json:"name"`
 	Description  string    `gorm:"type:text" json:"description"`
 	Price        float64   `gorm:"not null;" json:"price"`
+	Category     string    `gorm:"type:text" json:"category"`
 	ImageURL     string    `gorm:"type:text" json:"imageURL"`
 	IsAvailable  bool      `json:"isAvailable"`
 	CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`

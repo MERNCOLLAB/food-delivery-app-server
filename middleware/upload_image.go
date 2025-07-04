@@ -33,12 +33,14 @@ func UploadImageValidator(key string, optional ...bool) gin.HandlerFunc {
 			}
 			appError := appErr.NewBadRequest("Image file is required", err)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
+			c.Abort()
 			return
 		}
 
 		if header.Size > MaxImageSize {
 			appError := appErr.NewBadRequest("File size exceeds 2 MB", nil)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
+			c.Abort()
 			return
 		}
 
@@ -47,6 +49,7 @@ func UploadImageValidator(key string, optional ...bool) gin.HandlerFunc {
 		if err != nil && err != io.EOF {
 			appError := appErr.NewBadRequest("Failed to read the file", err)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
+			c.Abort()
 			return
 		}
 
@@ -54,6 +57,7 @@ func UploadImageValidator(key string, optional ...bool) gin.HandlerFunc {
 		if !allowedTypes[filetype] {
 			appError := appErr.NewBadRequest("Invalid file type. Only JPEG, PNG, and WEBP are allowed", err)
 			c.JSON(appError.Code, gin.H{"error": appError.Message})
+			c.Abort()
 			return
 		}
 

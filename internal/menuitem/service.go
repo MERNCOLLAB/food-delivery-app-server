@@ -19,10 +19,11 @@ func (s *Service) CreateMenuItem(restaurantId string, createReq CreateMenuItemRe
 	name := createReq.Name
 	description := createReq.Description
 	price := createReq.Price
+	category := createReq.Category
 	file := createReq.ImageFile
 	fileHeader := createReq.ImageHeader
 
-	if name == "" || price <= 0 {
+	if name == "" || category == "" || price <= 0 {
 		return nil, appErr.NewBadRequest("Missing required fields", nil)
 	}
 
@@ -52,6 +53,7 @@ func (s *Service) CreateMenuItem(restaurantId string, createReq CreateMenuItemRe
 		RestaurantID: restoId,
 		Name:         name,
 		Description:  utils.SafeString(description, ""),
+		Category:     category,
 		Price:        price,
 		ImageURL:     url,
 		IsAvailable:  true,
@@ -67,6 +69,7 @@ func (s *Service) CreateMenuItem(restaurantId string, createReq CreateMenuItemRe
 		RestaurantID: newMenuItem.RestaurantID.String(),
 		Name:         newMenuItem.Name,
 		Price:        newMenuItem.Price,
+		Category:     newMenuItem.Category,
 		IsAvailable:  newMenuItem.IsAvailable,
 	}
 
@@ -119,6 +122,7 @@ func (s *Service) UpdateMenuItem(menuItemId string, updateReq UpdateMenuItemRequ
 		Name:        &menuItem.Name,
 		Description: &menuItem.Description,
 		Price:       &menuItem.Price,
+		Category:    &menuItem.Category,
 		ImageURL:    &menuItem.ImageURL,
 	}
 

@@ -28,6 +28,7 @@ func (h *Handler) CreateMenuItem(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
+		Category:    req.Category,
 		ImageFile:   imageFile.(multipart.File),
 		ImageHeader: imageHeader.(*multipart.FileHeader),
 	}
@@ -70,6 +71,7 @@ func (h *Handler) UpdateMenuItem(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Price:       req.Price,
+		Category:    req.Category,
 		ImageFile:   imgFilePtr,
 		ImageHeader: imgHeaderPtr,
 	}

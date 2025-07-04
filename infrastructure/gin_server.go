@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"food-delivery-app-server/infrastructure/routes"
 	"food-delivery-app-server/middleware"
 	"log"
 	"os"
@@ -18,7 +19,7 @@ func RunGin() {
 
 	r.Use(middleware.ErrorHandler())
 
-	RegisterRoutes(r)
+	routes.RegisterRoutes(r, DB)
 
 	err := r.Run(":" + port)
 	if err != nil {

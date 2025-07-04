@@ -9,4 +9,6 @@ func RegisterRoutes(r *gin.Engine, DB *gorm.DB) {
 	RegisterAuthRoutes(r, DB)
 	RegisterUserRoutes(r, DB)
 	RegisterResetPasswordRoutes(r, DB)
+	RegisterRestaurantRoutes(r, DB)
+	RegisterMenuItemsRoutes(r, DB)
 }

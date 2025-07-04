@@ -7,7 +7,6 @@ import (
 	"food-delivery-app-server/internal/address"
 	"food-delivery-app-server/internal/menuitem"
 	"food-delivery-app-server/internal/order"
-	"food-delivery-app-server/internal/restaurant"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,14 +14,9 @@ import (
 func RegisterRoutes(r *gin.Engine) {
 
 	addressHandler := address.NewHandler(DB)
-	restaurantHandler := restaurant.NewHandler(DB)
+
 	menuItemHandler := menuitem.NewHandler(DB)
 	orderHandler := order.NewHandler(DB)
-
-	ownerAndCustMenuItem := r.Group("/menu-item", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
-	{
-		ownerAndCustMenuItem.GET("/restaurant/:id", menuItemHandler.GetMenuItemByRestaurant)
-	}
 
 	ownerAndCustAddress := r.Group("/address", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner, models.Customer))
 	{
@@ -32,21 +26,6 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	ownerGroup := r.Group("/owner", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Owner))
-	ownerRestaurants := ownerGroup.Group("/restaurant")
-	{
-		ownerRestaurants.POST("/", middleware.UploadImageValidator("image"), restaurantHandler.CreateRestaurant)
-		ownerRestaurants.GET("/", restaurantHandler.GetRestaurantByOwner)
-		ownerRestaurants.PUT("/:id", middleware.UploadImageValidator("image", true), restaurantHandler.UpdateRestaurant)
-		ownerRestaurants.DELETE("/:id", restaurantHandler.DeleteRestaurant)
-
-		ownerRestaurants.POST("/:id/menu-item", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
-	}
-
-	ownerMenuItems := ownerGroup.Group("/menu-item")
-	{
-		ownerMenuItems.PUT("/:id", middleware.UploadImageValidator("image", true), menuItemHandler.UpdateMenuItem)
-		ownerMenuItems.DELETE("/:id", menuItemHandler.DeleteMenuItem)
-	}
 
 	ownerOrder := ownerGroup.Group("/order")
 	{
@@ -55,11 +34,6 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	customerGroup := r.Group("/customer", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Customer))
-	customerRestaurants := customerGroup.Group("/restaurant")
-	{
-		customerRestaurants.GET("/", restaurantHandler.GetAllRestaurants)                      //not yet functional
-		customerRestaurants.GET("/:id/menu-items", restaurantHandler.GetMoreRestaurantDetails) //not yet functional
-	}
 
 	customerMenuItems := customerGroup.Group("/menu-item")
 	{

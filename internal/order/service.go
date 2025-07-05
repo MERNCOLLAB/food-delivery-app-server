@@ -12,6 +12,14 @@ func (s *Service) GetOrderByRestaurant() {
 
 }
 
-func (s *Service) UpdateOrderStatus() {
+func (s *Service) GetOrderDetails() {
+
+}
+
+func (s *Service) GetOrderHistory() {
+
+}
+
+func (s *Service) GetAvailableOrders() {
 
 }

@@ -17,7 +17,7 @@ func RegisterMenuItemsRoutes(r *gin.Engine, DB *gorm.DB) {
 	{
 		owner.POST("/", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
 		owner.PUT("/:id", middleware.UploadImageValidator("image", true), menuItemHandler.UpdateMenuItem)
-		owner.DELETE("/", menuItemHandler.DeleteMenuItem)
+		owner.DELETE("/:id", menuItemHandler.DeleteMenuItem)
 	}
 
 	customer := r.Group("/", middleware.RequireRoles(models.Customer))

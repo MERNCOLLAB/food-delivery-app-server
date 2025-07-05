@@ -16,14 +16,14 @@ func RegisterRestaurantRoutes(r *gin.Engine, DB *gorm.DB) {
 	owner := restaurant.Group("/", middleware.RequireRoles(models.Owner))
 	{
 		owner.POST("/", middleware.UploadImageValidator("image"), restaurantHandler.CreateRestaurant)
-		owner.GET("/", restaurantHandler.GetRestaurantByOwner)
+		owner.GET("/owner", restaurantHandler.GetRestaurantByOwner)
 		owner.PUT("/:id", middleware.UploadImageValidator("image", true), restaurantHandler.UpdateRestaurant)
 		owner.DELETE("/:id", restaurantHandler.DeleteRestaurant)
 	}
 
 	customer := restaurant.Group("/", middleware.RequireRoles(models.Customer))
 	{
-		customer.GET("/", restaurantHandler.GetAllRestaurants)                      //not yet functional
+		customer.GET("/customer", restaurantHandler.GetAllRestaurants)              //not yet functional
 		customer.GET("/:id/menu-items", restaurantHandler.GetMoreRestaurantDetails) //not yet functional
 	}
 }

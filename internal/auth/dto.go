@@ -19,6 +19,7 @@ type SignUpRequest struct {
 	Address         string
 	Password        string
 	ConfirmPassword string
+	Token           string
 	Role            Role
 }
 

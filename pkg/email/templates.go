@@ -34,6 +34,9 @@ const SignUpFormTemplate = `
             <a href="%s" style="font-size: 18px; color:#d417ff;">%s</a>
         </p>
         <p style="font-size: 14px;">
+            This invitation link expires 12 hours after this email is sent.
+        </p>
+        <p style="font-size: 14px;">
             If you did not expect this invitation, you can ignore this email.
         </p>
     </div>`

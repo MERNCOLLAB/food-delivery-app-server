@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -49,6 +50,25 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 
 	if existingUser != nil {
 		return nil, "", appErr.NewBadRequest("User with that email already exists", nil)
+	}
+
+	if req.Token == "" {
+		return nil, "", appErr.NewBadRequest("Missing invitation token", nil)
+	}
+	val, err := s.rdb.Get(context.Background(), "signup_invite:"+req.Token).Result()
+	if err == redis.Nil {
+		return nil, "", appErr.NewBadRequest("Invalid or expired invitation token", nil)
+	} else if err != nil {
+		return nil, "", appErr.NewInternal("Failed to verify invitation token", err)
+	}
+
+	var invite SendSignUpFormRequest
+	if err := json.Unmarshal([]byte(val), &invite); err != nil {
+		return nil, "", appErr.NewInternal("Failed to parse invitation data", err)
+	}
+
+	if invite.Email != req.Email {
+		return nil, "", appErr.NewBadRequest("Invitation token does not match email", nil)
 	}
 
 	hashedPassword, err := utils.HashPassword(req.Password)
@@ -306,7 +326,17 @@ func (s *Service) SendSignUpForm(req SendSignUpFormRequest) error {
 		return appErr.NewBadRequest("User with that email already exists", nil)
 	}
 
-	signupURL := "http://localhost:3000/owner&driver/signup"
+	token := utils.GenerateUUIDStr()
+
+	invite := SendSignUpFormRequest{Email: emailAddr, Role: role}
+	data, _ := json.Marshal(invite)
+
+	err = s.rdb.Set(context.Background(), "signup_invite:"+token, data, 12*time.Hour).Err()
+	if err != nil {
+		return appErr.NewInternal("Failed to store sign-up invite", err)
+	}
+
+	signupURL := fmt.Sprintf("http://localhost:3000/owner&driver/signup?token=%s", token)
 
 	if err := email.SendSignUpForm(emailAddr, role, signupURL); err != nil {
 		return appErr.NewBadRequest("Invalid Email or User Role", err)

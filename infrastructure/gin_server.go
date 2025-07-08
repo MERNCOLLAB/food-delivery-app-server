@@ -19,7 +19,7 @@ func RunGin() {
 
 	r.Use(middleware.ErrorHandler())
 
-	routes.RegisterRoutes(r, DB)
+	routes.RegisterRoutes(r, DB, RedisClient)
 
 	err := r.Run(":" + port)
 	if err != nil {

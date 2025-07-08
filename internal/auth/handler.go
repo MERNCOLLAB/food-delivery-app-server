@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -14,9 +15,9 @@ type Handler struct {
 	service *Service
 }
 
-func NewHandler(db *gorm.DB) *Handler {
+func NewHandler(db *gorm.DB, rdb *redis.Client) *Handler {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	service := NewService(repo, rdb)
 	return &Handler{service: service}
 }
 

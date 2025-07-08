@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"food-delivery-app-server/models"
+	"food-delivery-app-server/pkg/email"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/geocode"
 	"food-delivery-app-server/pkg/oauth"
@@ -290,4 +291,26 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 	}
 
 	return &userResponse, token, nil
+}
+
+func (s *Service) SendSignUpForm(req SendSignUpFormRequest) error {
+	emailAddr := req.Email
+	role := req.Role
+
+	existingUser, err := s.repo.FindUserByEmail(emailAddr)
+	if err != nil {
+		return appErr.NewBadRequest("Failed to verify if the email exists", err)
+	}
+
+	if existingUser != nil {
+		return appErr.NewBadRequest("User with that email already exists", nil)
+	}
+
+	signupURL := "http://localhost:3000/owner&driver/signup"
+
+	if err := email.SendSignUpForm(emailAddr, role, signupURL); err != nil {
+		return appErr.NewBadRequest("Invalid Email or User Role", err)
+	}
+
+	return nil
 }

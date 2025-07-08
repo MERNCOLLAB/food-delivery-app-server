@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 
 	"food-delivery-app-server/internal/auth"
+	"food-delivery-app-server/middleware"
+	"food-delivery-app-server/models"
 )
 
 func RegisterAuthRoutes(r *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
@@ -22,4 +24,9 @@ func RegisterAuthRoutes(r *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 		authGroup.POST("/signout", authHandler.SignOut)
 	}
 
+	adminOnly := authGroup.Group("/", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Admin))
+	{
+		adminOnly.POST("/send-signup", authHandler.SendSignUpForm)
+		adminOnly.POST("/signup-approval")
+	}
 }

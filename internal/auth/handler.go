@@ -28,17 +28,15 @@ func (h *Handler) SignUp(c *gin.Context) {
 		return
 	}
 
-	newUser, token, err := h.service.SignUp(*req)
+	signUpID, err := h.service.SignUp(*req)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	utils.SetCookie(c, token, 3600*5)
-
 	c.JSON(200, gin.H{
-		"message": "You have successfully registered an account",
-		"user":    newUser,
+		"message":  "You have successfully registered an account",
+		"signUpID": signUpID,
 	})
 }
 

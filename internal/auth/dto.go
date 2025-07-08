@@ -48,3 +48,9 @@ type VerifyOTPRequest struct {
 	Phone   string `json:"phone"`
 	OTP     string `json:"otp"`
 }
+
+// Admin Actions
+type SendSignUpFormRequest struct {
+	Email string `json:"email" binding:"required,email"`
+	Role  string `json:"role" binding:"required"`
+}

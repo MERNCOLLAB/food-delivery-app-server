@@ -148,3 +148,20 @@ func (h *Handler) SignOut(c *gin.Context) {
 		"message": "You have signed out successfully",
 	})
 }
+
+func (h *Handler) SendSignUpForm(c *gin.Context) {
+	req, err := http_helper.BindJSON[SendSignUpFormRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := h.service.SendSignUpForm(*req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "A sign up form invitation with link was sent to the provided email",
+	})
+}

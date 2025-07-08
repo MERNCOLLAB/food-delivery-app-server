@@ -11,9 +11,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type OAuthTempData struct {
-	Info      interface{}
-	ExpiresAt time.Time
+type UserTempData struct {
+	Info interface{}
 }
 
 func GenerateOTP() string {
@@ -36,8 +35,8 @@ func DeleteOTP(rdb *redis.Client, phone string) error {
 	return rdb.Del(ctx, "otp:"+phone).Err()
 }
 
-// OAuth Retrieved Data
-func SetOAuthTemp(rdb *redis.Client, stateID string, data OAuthTempData, expiration time.Duration) error {
+// Temporary User Data
+func SetTempUser(rdb *redis.Client, stateID string, data UserTempData, expiration time.Duration) error {
 	ctx := context.Background()
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -46,30 +45,29 @@ func SetOAuthTemp(rdb *redis.Client, stateID string, data OAuthTempData, expirat
 	return rdb.Set(ctx, "oauth"+stateID, b, expiration).Err()
 }
 
-func GetOAuthTemp(rdb *redis.Client, stateID string) (OAuthTempData, error) {
+func GetTempUser(rdb *redis.Client, stateID string) (UserTempData, error) {
 	ctx := context.Background()
 	val, err := rdb.Get(ctx, "oauth"+stateID).Result()
 	if err != nil {
-		return OAuthTempData{}, err
+		return UserTempData{}, err
 	}
 
-	var data OAuthTempData
+	var data UserTempData
 	err = json.Unmarshal([]byte(val), &data)
 	return data, err
 }
 
-func DeleteOAuthTemp(rdb *redis.Client, stateID string) error {
+func DeleteTempUser(rdb *redis.Client, stateID string) error {
 	ctx := context.Background()
 	return rdb.Del(ctx, "oauth:"+stateID).Err()
 }
 
 func GenerateStateID(rdb *redis.Client, info interface{}) string {
 	stateID := GenerateUUIDStr()
-	data := OAuthTempData{
-		Info:      info,
-		ExpiresAt: time.Now().Add(5 * time.Minute),
+	data := UserTempData{
+		Info: info,
 	}
 
-	_ = SetOAuthTemp(rdb, stateID, data, 5*time.Minute)
+	_ = SetTempUser(rdb, stateID, data, 5*time.Minute)
 	return stateID
 }

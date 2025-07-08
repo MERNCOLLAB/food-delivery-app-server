@@ -20,10 +20,11 @@ var DefaultProfilePic string = "https://res.cloudinary.com/dowkytkyb/image/uploa
 
 type Service struct {
 	repo *Repository
+	rdb  *redis.Client
 }
 
 func NewService(repo *Repository, rdb *redis.Client) *Service {
-	return &Service{repo: repo}
+	return &Service{repo: repo, rdb: rdb}
 }
 
 func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
@@ -154,7 +155,7 @@ func (s *Service) OAuthSignUp(req OAuthRequest, provider string) (string, error)
 		return "", appErr.NewBadRequest("Failed to verify token", err)
 	}
 
-	stateID := utils.GenerateStateID(rdb, info)
+	stateID := utils.GenerateStateID(s.rdb, info)
 
 	return stateID, nil
 }
@@ -213,14 +214,14 @@ func (s *Service) SendOTP(stateID, phone string) error {
 		return appErr.NewBadRequest("Invalid phone number", err)
 	}
 
-	data, err := utils.GetOAuthTemp(rdb, stateID)
-	if err != nil || time.Now().After(data.ExpiresAt) {
-		return appErr.NewBadRequest("Invalid or Expired State ID", nil)
+	_, err := utils.GetTempUser(s.rdb, stateID)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid or Expired State ID", err)
 	}
 
 	otp := utils.GenerateOTP()
 
-	if err := utils.SetOTP(rdb, phone, otp, 5*time.Minute); err != nil {
+	if err := utils.SetOTP(s.rdb, phone, otp, 5*time.Minute); err != nil {
 		return appErr.NewInternal("Failed to store OTP", err)
 	}
 
@@ -240,13 +241,13 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 		return nil, "", appErr.NewBadRequest("Invalid phone number", err)
 	}
 
-	storedOTP, err := utils.GetOTP(rdb, phone)
+	storedOTP, err := utils.GetOTP(s.rdb, phone)
 	if err != nil || storedOTP != otp {
 		return nil, "", appErr.NewBadRequest("Invalid or expired OTP", nil)
 	}
 
-	oAuthData, err := utils.GetOAuthTemp(rdb, stateID)
-	if err != nil || time.Now().After(oAuthData.ExpiresAt) {
+	oAuthData, err := utils.GetTempUser(s.rdb, stateID)
+	if err != nil {
 		return nil, "", appErr.NewBadRequest("Invalid or expired state ID", nil)
 	}
 

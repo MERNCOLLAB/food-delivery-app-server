@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -11,16 +12,19 @@ import (
 	"food-delivery-app-server/pkg/oauth"
 	"food-delivery-app-server/pkg/sms"
 	"food-delivery-app-server/pkg/utils"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var DefaultProfilePic string = "https://res.cloudinary.com/dowkytkyb/image/upload/v1750666850/default_profile_qbzide.png"
 
 type Service struct {
 	repo *Repository
+	rdb  *redis.Client
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *Repository, rdb *redis.Client) *Service {
+	return &Service{repo: repo, rdb: rdb}
 }
 
 func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
@@ -151,7 +155,7 @@ func (s *Service) OAuthSignUp(req OAuthRequest, provider string) (string, error)
 		return "", appErr.NewBadRequest("Failed to verify token", err)
 	}
 
-	stateID := utils.GenerateStateID(info)
+	stateID := utils.GenerateStateID(s.rdb, info)
 
 	return stateID, nil
 }
@@ -210,18 +214,16 @@ func (s *Service) SendOTP(stateID, phone string) error {
 		return appErr.NewBadRequest("Invalid phone number", err)
 	}
 
-	utils.OAuthTempStore.RLock()
-	data, ok := utils.OAuthTempStore.M[stateID]
-	utils.OAuthTempStore.RUnlock()
-	if !ok || time.Now().After(data.ExpiresAt) {
-		return appErr.NewBadRequest("Invalid or Expired State ID", nil)
+	_, err := utils.GetTempUser(s.rdb, stateID)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid or Expired State ID", err)
 	}
 
 	otp := utils.GenerateOTP()
 
-	utils.OtpStore.Lock()
-	utils.OtpStore.M[phone] = otp
-	utils.OtpStore.Unlock()
+	if err := utils.SetOTP(s.rdb, phone, otp, 5*time.Minute); err != nil {
+		return appErr.NewInternal("Failed to store OTP", err)
+	}
 
 	if err := sms.SendOTPTextBee(phone, otp); err != nil {
 		return appErr.NewInternal("Failed to send OTP via SMS", err)
@@ -239,23 +241,24 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 		return nil, "", appErr.NewBadRequest("Invalid phone number", err)
 	}
 
-	utils.OtpStore.RLock()
-	expectedOTP, ok := utils.OtpStore.M[phone]
-	utils.OtpStore.RUnlock()
-	if !ok || expectedOTP != otp {
+	storedOTP, err := utils.GetOTP(s.rdb, phone)
+	if err != nil || storedOTP != otp {
 		return nil, "", appErr.NewBadRequest("Invalid or expired OTP", nil)
 	}
 
-	utils.OAuthTempStore.RLock()
-	oAuthData, ok := utils.OAuthTempStore.M[stateID]
-	utils.OAuthTempStore.RUnlock()
-	if !ok || time.Now().After(oAuthData.ExpiresAt) {
+	oAuthData, err := utils.GetTempUser(s.rdb, stateID)
+	if err != nil {
 		return nil, "", appErr.NewBadRequest("Invalid or expired state ID", nil)
 	}
 
 	info, ok := oAuthData.Info.(*oauth.UserInfo)
 	if !ok {
-		return nil, "", appErr.NewInternal("Failed to parse OAuth user info", nil)
+		b, _ := json.Marshal(oAuthData.Info)
+		var userInfo oauth.UserInfo
+		if err := json.Unmarshal(b, &userInfo); err != nil {
+			return nil, "", appErr.NewInternal("Failed to parse OAuth user info", err)
+		}
+		info = &userInfo
 	}
 
 	userId := utils.GenerateUUID()
@@ -280,8 +283,6 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 	if err != nil {
 		return nil, "", appErr.NewInternal("Failed to generate token", err)
 	}
-
-	utils.CleanMemory(phone, stateID)
 
 	userResponse := JWTAuthResponse{
 		ID:   createdUser.ID.String(),

@@ -1,48 +1,73 @@
 package utils
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
-	"sync"
+
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
-type OAuthTempData struct {
-	Info      interface{}
-	ExpiresAt time.Time
+type UserTempData struct {
+	Info interface{}
 }
-
-var OtpStore = struct {
-	sync.RWMutex
-	M map[string]string
-}{M: make(map[string]string)}
-
-var OAuthTempStore = struct {
-	sync.RWMutex
-	M map[string]OAuthTempData
-}{M: make(map[string]OAuthTempData)}
 
 func GenerateOTP() string {
 	return fmt.Sprintf("%05d", rand.Intn(100000))
 }
 
-func GenerateStateID(info interface{}) string {
-	stateID := GenerateUUIDStr()
-	OAuthTempStore.Lock()
-	OAuthTempStore.M[stateID] = OAuthTempData{
-		Info:      info,
-		ExpiresAt: time.Now().Add(5 * time.Minute),
-	}
-	OAuthTempStore.Unlock()
-	return stateID
+// OTP only
+func SetOTP(rdb *redis.Client, phone, otp string, expiration time.Duration) error {
+	ctx := context.Background()
+	return rdb.Set(ctx, "otp:"+phone, otp, expiration).Err()
 }
 
-func CleanMemory(phone, stateID string) {
-	OtpStore.Lock()
-	delete(OtpStore.M, phone)
-	OtpStore.Unlock()
+func GetOTP(rdb *redis.Client, phone string) (string, error) {
+	ctx := context.Background()
+	return rdb.Get(ctx, "otp:"+phone).Result()
+}
 
-	OAuthTempStore.Lock()
-	delete(OAuthTempStore.M, stateID)
-	OAuthTempStore.Unlock()
+func DeleteOTP(rdb *redis.Client, phone string) error {
+	ctx := context.Background()
+	return rdb.Del(ctx, "otp:"+phone).Err()
+}
+
+// Temporary User Data
+func SetTempUser(rdb *redis.Client, stateID string, data UserTempData, expiration time.Duration) error {
+	ctx := context.Background()
+	b, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return rdb.Set(ctx, "oauth"+stateID, b, expiration).Err()
+}
+
+func GetTempUser(rdb *redis.Client, stateID string) (UserTempData, error) {
+	ctx := context.Background()
+	val, err := rdb.Get(ctx, "oauth"+stateID).Result()
+	if err != nil {
+		return UserTempData{}, err
+	}
+
+	var data UserTempData
+	err = json.Unmarshal([]byte(val), &data)
+	return data, err
+}
+
+func DeleteTempUser(rdb *redis.Client, stateID string) error {
+	ctx := context.Background()
+	return rdb.Del(ctx, "oauth:"+stateID).Err()
+}
+
+func GenerateStateID(rdb *redis.Client, info interface{}) string {
+	stateID := GenerateUUIDStr()
+	data := UserTempData{
+		Info: info,
+	}
+
+	_ = SetTempUser(rdb, stateID, data, 5*time.Minute)
+	return stateID
 }

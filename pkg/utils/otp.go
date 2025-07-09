@@ -68,6 +68,6 @@ func SetTempCustomer(rdb *redis.Client, info interface{}) string {
 		Info: info,
 	}
 
-	_ = SetTempUser(rdb, redisKey, data, 5*time.Minute)
+	_ = SetTempUser(rdb, redisKey, data, 20*time.Minute)
 	return redisKey
 }

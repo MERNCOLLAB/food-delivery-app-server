@@ -260,7 +260,7 @@ func (s *Service) SendOTPToPhone(redisKey, phone string) error {
 
 	_, err := utils.GetTempUser(s.rdb, redisKey)
 	if err != nil {
-		return appErr.NewBadRequest("Invalid or expired Redis key", err)
+		return appErr.NewBadRequest("Invalid or expired temporary user data", err)
 	}
 
 	otp := utils.GenerateOTP()

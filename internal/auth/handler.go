@@ -35,7 +35,7 @@ func (h *Handler) SignUp(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{
-		"message":  "You have successfully registered an account",
+		"message":  "Your application has been sent to admin for approval",
 		"signUpID": signUpID,
 	})
 }
@@ -161,5 +161,33 @@ func (h *Handler) SendSignUpForm(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"message": "A sign up form invitation with link was sent to the provided email",
+	})
+}
+
+func (h *Handler) SignUpDecision(c *gin.Context) {
+	signUpID := c.Param("id")
+	req, err := http_helper.BindJSON[SignUpDecisionRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	userResData, token, err := h.service.SignUpDecision(*req, signUpID)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if !req.IsAccepted {
+		c.JSON(200, gin.H{"message": "Sign Up Application has been rejected"})
+		return
+	}
+
+	utils.SetCookie(c, token, 3600*5)
+
+	c.JSON(200, gin.H{
+		"message": "Sign Up Application has been decided",
+		"user":    userResData,
+		"token":   token,
 	})
 }

@@ -1,5 +1,7 @@
 package auth
 
+import "food-delivery-app-server/models"
+
 // JWT Authentication Feature
 type Role string
 
@@ -54,4 +56,13 @@ type VerifyOTPRequest struct {
 type SendSignUpFormRequest struct {
 	Email string `json:"email" binding:"required,email"`
 	Role  string `json:"role" binding:"required"`
+}
+
+type SignUpDecisionRequest struct {
+	IsAccepted bool `json:"isAccepted" binding:"required"`
+}
+
+type PendingSignUp struct {
+	User    *models.User    `json:"user"`
+	Address *models.Address `json:"address"`
 }

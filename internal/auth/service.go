@@ -199,9 +199,9 @@ func (s *Service) OAuthSignUp(req OAuthRequest, provider string) (string, error)
 		return "", appErr.NewBadRequest("Failed to verify token", err)
 	}
 
-	stateID := utils.GenerateStateID(s.rdb, info)
+	redisKey := utils.SetTempCustomer(s.rdb, info)
 
-	return stateID, nil
+	return redisKey, nil
 }
 
 func (s *Service) OAuthSignIn(req OAuthRequest, provider string) (*JWTAuthResponse, string, error) {
@@ -253,14 +253,14 @@ func (s *Service) OAuthSignIn(req OAuthRequest, provider string) (*JWTAuthRespon
 	return &userResponse, token, nil
 }
 
-func (s *Service) SendOTP(stateID, phone string) error {
+func (s *Service) SendOTPToPhone(redisKey, phone string) error {
 	if err := sms.ValidatePhone(phone); err != nil {
 		return appErr.NewBadRequest("Invalid phone number", err)
 	}
 
-	_, err := utils.GetTempUser(s.rdb, stateID)
+	_, err := utils.GetTempUser(s.rdb, redisKey)
 	if err != nil {
-		return appErr.NewBadRequest("Invalid or Expired State ID", err)
+		return appErr.NewBadRequest("Invalid or expired temporary user data", err)
 	}
 
 	otp := utils.GenerateOTP()
@@ -279,7 +279,7 @@ func (s *Service) SendOTP(stateID, phone string) error {
 func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, error) {
 	phone := req.Phone
 	otp := req.OTP
-	stateID := req.StateID
+	redisKey := req.RedisKey
 
 	if err := sms.ValidatePhone(phone); err != nil {
 		return nil, "", appErr.NewBadRequest("Invalid phone number", err)
@@ -290,9 +290,9 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 		return nil, "", appErr.NewBadRequest("Invalid or expired OTP", nil)
 	}
 
-	oAuthData, err := utils.GetTempUser(s.rdb, stateID)
+	oAuthData, err := utils.GetTempUser(s.rdb, redisKey)
 	if err != nil {
-		return nil, "", appErr.NewBadRequest("Invalid or expired state ID", nil)
+		return nil, "", appErr.NewBadRequest("Invalid or expired redis key", nil)
 	}
 
 	info, ok := oAuthData.Info.(*oauth.UserInfo)
@@ -386,8 +386,8 @@ func (s *Service) SignUpDecision(req SignUpDecisionRequest, signUpID string) (*J
 	}
 
 	// If rejected
-	if !req.IsAccepted {
-		_ = s.rdb.Del(ctx, "pending_signup"+signUpID).Err()
+	if !*req.IsAccepted {
+		_ = s.rdb.Del(ctx, "pending_signup:"+signUpID).Err()
 		return nil, "", nil
 	}
 

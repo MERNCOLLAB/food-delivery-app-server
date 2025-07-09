@@ -69,15 +69,15 @@ func (h *Handler) OAuthSignUp(c *gin.Context) {
 		return
 	}
 
-	stateID, err := h.service.OAuthSignUp(*req, provider)
+	redisKey, err := h.service.OAuthSignUp(*req, provider)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"stateId": stateID,
-		"message": fmt.Sprintf("OAuth with %s succeeded; please verify phone next.", provider),
+		"redisKey": redisKey,
+		"message":  fmt.Sprintf("OAuth with %s succeeded. Please proceed with providing your phone number", provider),
 	})
 }
 
@@ -103,14 +103,15 @@ func (h *Handler) OAuthSignIn(c *gin.Context) {
 	})
 }
 
-func (h *Handler) SendOTP(c *gin.Context) {
+func (h *Handler) SendOTPToPhone(c *gin.Context) {
+	redisKey := c.Param("id")
 	req, err := http_helper.BindJSON[SendOTPRequest](c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	if err := h.service.SendOTP(req.StateID, req.Phone); err != nil {
+	if err := h.service.SendOTPToPhone(redisKey, req.Phone); err != nil {
 		c.Error(err)
 		return
 	}
@@ -178,7 +179,12 @@ func (h *Handler) SignUpDecision(c *gin.Context) {
 		return
 	}
 
-	if !req.IsAccepted {
+	if req.IsAccepted == nil {
+		c.JSON(400, gin.H{"error": "isAccepted is required"})
+		return
+	}
+
+	if !*req.IsAccepted {
 		c.JSON(200, gin.H{"message": "Sign Up Application has been rejected"})
 		return
 	}
@@ -188,6 +194,5 @@ func (h *Handler) SignUpDecision(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Sign Up Application has been decided",
 		"user":    userResData,
-		"token":   token,
 	})
 }

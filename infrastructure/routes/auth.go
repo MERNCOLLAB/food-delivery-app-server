@@ -27,6 +27,6 @@ func RegisterAuthRoutes(r *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 	adminOnly := authGroup.Group("/", middleware.JWTAuthMiddleware(), middleware.RequireRoles(models.Admin))
 	{
 		adminOnly.POST("/send-signup", authHandler.SendSignUpForm)
-		adminOnly.POST("/signup-approval")
+		adminOnly.POST("/pending-signups/:id/decision", authHandler.SignUpDecision)
 	}
 }

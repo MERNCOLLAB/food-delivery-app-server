@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -29,53 +30,61 @@ func NewService(repo *Repository, rdb *redis.Client) *Service {
 	return &Service{repo: repo, rdb: rdb}
 }
 
-func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
+func (s *Service) SignUp(req SignUpRequest) (string, error) {
+	// Missing Required Validation
 	if req.Email == "" || req.Password == "" || req.ConfirmPassword == "" || req.Address == "" ||
 		req.FirstName == "" || req.LastName == "" || req.Bio == "" || req.Phone == "" {
-		return nil, "", appErr.NewBadRequest("Missing required fields", nil)
+		return "", appErr.NewBadRequest("Missing required fields", nil)
 	}
 
+	// Validate Phone Format
 	if err := sms.ValidatePhone(req.Phone); err != nil {
-		return nil, "", appErr.NewBadRequest("Invalid Phone Number Format", err)
+		return "", appErr.NewBadRequest("Invalid Phone Number Format", err)
 	}
 
+	// Password Mismatch
 	if req.Password != req.ConfirmPassword {
-		return nil, "", appErr.NewBadRequest("Passwords do not match", nil)
+		return "", appErr.NewBadRequest("Passwords do not match", nil)
 	}
 
+	// Existing User Validation
 	existingUser, err := s.repo.FindUserByEmail(req.Email)
 	if err != nil {
-		return nil, "", appErr.NewBadRequest("Failed to verify if the email exists", err)
+		return "", appErr.NewBadRequest("Failed to verify if the email exists", err)
 	}
 
 	if existingUser != nil {
-		return nil, "", appErr.NewBadRequest("User with that email already exists", nil)
+		return "", appErr.NewBadRequest("User with that email already exists", nil)
 	}
 
+	// Sign Up Link Token Validation
 	if req.Token == "" {
-		return nil, "", appErr.NewBadRequest("Missing invitation token", nil)
+		return "", appErr.NewBadRequest("Missing invitation token", nil)
 	}
 	val, err := s.rdb.Get(context.Background(), "signup_invite:"+req.Token).Result()
+
 	if err == redis.Nil {
-		return nil, "", appErr.NewBadRequest("Invalid or expired invitation token", nil)
+		return "", appErr.NewBadRequest("Invalid or expired invitation token", nil)
 	} else if err != nil {
-		return nil, "", appErr.NewInternal("Failed to verify invitation token", err)
+		return "", appErr.NewInternal("Failed to verify invitation token", err)
 	}
 
 	var invite SendSignUpFormRequest
 	if err := json.Unmarshal([]byte(val), &invite); err != nil {
-		return nil, "", appErr.NewInternal("Failed to parse invitation data", err)
+		return "", appErr.NewInternal("Failed to parse invitation data", err)
 	}
 
 	if invite.Email != req.Email {
-		return nil, "", appErr.NewBadRequest("Invitation token does not match email", nil)
+		return "", appErr.NewBadRequest("Invitation token does not match email", nil)
 	}
 
+	// Password Hashing
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		return nil, "", appErr.NewInternal("Failed to hash the password", err)
+		return "", appErr.NewInternal("Failed to hash the password", err)
 	}
 
+	// User and Address Data Preparation
 	userId := utils.GenerateUUID()
 	addressId := utils.GenerateUUID()
 
@@ -94,7 +103,7 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 	ctx := context.Background()
 	lat, long, err := geocode.Geocode(ctx, req.Address)
 	if err != nil {
-		return nil, "", appErr.NewInternal("Failed to geocode the provided address", err)
+		return "", appErr.NewInternal("Failed to geocode the provided address", err)
 	}
 
 	newAddress := &models.Address{
@@ -106,27 +115,41 @@ func (s *Service) SignUp(req SignUpRequest) (*JWTAuthResponse, string, error) {
 		Longitude: long,
 	}
 
-	createdUser, err := s.repo.CreateUser(newUser)
+	// Marshal the Data for Redis Storage
+	pendingSignUpID := utils.GenerateUUIDStr()
+	pendingData := map[string]interface{}{
+		"user":    newUser,
+		"address": newAddress,
+	}
+
+	data, err := json.Marshal(pendingData)
 	if err != nil {
-		return nil, "", appErr.NewInternal("Failed to create user at database", err)
+		return "", appErr.NewInternal("Failed to serialize pending signup data", err)
 	}
 
-	_, err = s.repo.CreateAddress(newAddress)
+	expiry := 10 * time.Minute
+	err = s.rdb.Set(ctx, "pending_signup:"+pendingSignUpID, data, expiry).Err()
 	if err != nil {
-		return nil, "", appErr.NewInternal("Failed to create address at database", err)
+		return "", appErr.NewInternal("Failed to store pending signup in Redis", err)
 	}
 
-	token, err := utils.GenerateJWT(createdUser)
-	if err != nil {
-		return nil, "", appErr.NewInternal("Failed to generate token", err)
+	// Sending Admin Users Notification of Pending Sign Up
+	admins, err := s.repo.FindAdmins()
+	log.Println(admins)
+	if err == nil {
+		for _, admin := range admins {
+			notification := &models.Notification{
+				ID:      utils.GenerateUUID(),
+				UserID:  admin.ID,
+				Message: fmt.Sprintf("New sign up request from %s %s", newUser.FirstName, newUser.LastName),
+				IsRead:  false,
+			}
+
+			_ = s.repo.CreateNotification(notification)
+		}
 	}
 
-	userResponse := JWTAuthResponse{
-		ID:   createdUser.ID.String(),
-		Role: string(createdUser.Role),
-	}
-
-	return &userResponse, token, nil
+	return pendingSignUpID, nil
 }
 
 func (s *Service) SignIn(req SignInRequest) (*JWTAuthResponse, string, error) {
@@ -343,4 +366,53 @@ func (s *Service) SendSignUpForm(req SendSignUpFormRequest) error {
 	}
 
 	return nil
+}
+
+func (s *Service) SignUpDecision(req SignUpDecisionRequest, signUpID string) (*JWTAuthResponse, string, error) {
+	ctx := context.Background()
+
+	// Retrieving pending sign-up data from Redis
+	val, err := s.rdb.Get(ctx, "pending_signup:"+signUpID).Result()
+	if err == redis.Nil {
+		return nil, "", appErr.NewBadRequest("Pending sign up not found", nil)
+	} else if err != nil {
+		return nil, "", appErr.NewInternal("Failed to retrieve pending sign up", err)
+	}
+
+	// Unmarshal the sign-up data
+	var pendingSignUp PendingSignUp
+	if err := json.Unmarshal([]byte(val), &pendingSignUp); err != nil {
+		return nil, "", appErr.NewInternal("Failed to parse the pending sign up data", err)
+	}
+
+	// If rejected
+	if !req.IsAccepted {
+		_ = s.rdb.Del(ctx, "pending_signup"+signUpID).Err()
+		return nil, "", nil
+	}
+
+	// If accepted
+	createdUser, err := s.repo.CreateUser(pendingSignUp.User)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to create user at database", err)
+	}
+
+	_, err = s.repo.CreateAddress(pendingSignUp.Address)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to create address at database", err)
+	}
+
+	_ = s.rdb.Del(ctx, "pending_signup:"+signUpID).Err()
+
+	token, err := utils.GenerateJWT(createdUser)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to generate token", err)
+	}
+
+	userResponse := JWTAuthResponse{
+		ID:   createdUser.ID.String(),
+		Role: string(createdUser.Role),
+	}
+
+	return &userResponse, token, nil
 }

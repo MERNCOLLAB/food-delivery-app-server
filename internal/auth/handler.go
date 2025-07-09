@@ -179,7 +179,12 @@ func (h *Handler) SignUpDecision(c *gin.Context) {
 		return
 	}
 
-	if !req.IsAccepted {
+	if req.IsAccepted == nil {
+		c.JSON(400, gin.H{"error": "isAccepted is required"})
+		return
+	}
+
+	if !*req.IsAccepted {
 		c.JSON(200, gin.H{"message": "Sign Up Application has been rejected"})
 		return
 	}
@@ -189,6 +194,5 @@ func (h *Handler) SignUpDecision(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Sign Up Application has been decided",
 		"user":    userResData,
-		"token":   token,
 	})
 }

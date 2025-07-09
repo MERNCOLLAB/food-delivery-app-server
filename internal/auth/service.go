@@ -386,8 +386,8 @@ func (s *Service) SignUpDecision(req SignUpDecisionRequest, signUpID string) (*J
 	}
 
 	// If rejected
-	if !req.IsAccepted {
-		_ = s.rdb.Del(ctx, "pending_signup"+signUpID).Err()
+	if !*req.IsAccepted {
+		_ = s.rdb.Del(ctx, "pending_signup:"+signUpID).Err()
 		return nil, "", nil
 	}
 

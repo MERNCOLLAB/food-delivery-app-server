@@ -58,7 +58,7 @@ type SendSignUpFormRequest struct {
 }
 
 type SignUpDecisionRequest struct {
-	IsAccepted bool `json:"isAccepted" binding:"required"`
+	IsAccepted *bool `json:"isAccepted" binding:"required"`
 }
 
 type PendingSignUp struct {

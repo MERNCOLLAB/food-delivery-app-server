@@ -19,7 +19,7 @@ func RegisterAuthRoutes(r *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 		authGroup.POST("/signin", authHandler.SignIn)
 		authGroup.POST("/oauth-signup/:provider", authHandler.OAuthSignUp)
 		authGroup.POST("/oauth-signin/:provider", authHandler.OAuthSignIn)
-		authGroup.POST("/send-otp", authHandler.SendOTP)
+		authGroup.POST("/send-otp/:id", authHandler.SendOTPToPhone)
 		authGroup.POST("/verify-otp", authHandler.VerifyOTP)
 		authGroup.POST("/signout", authHandler.SignOut)
 	}

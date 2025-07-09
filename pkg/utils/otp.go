@@ -36,18 +36,18 @@ func DeleteOTP(rdb *redis.Client, phone string) error {
 }
 
 // Temporary User Data
-func SetTempUser(rdb *redis.Client, stateID string, data UserTempData, expiration time.Duration) error {
+func SetTempUser(rdb *redis.Client, redisKey string, data UserTempData, expiration time.Duration) error {
 	ctx := context.Background()
 	b, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	return rdb.Set(ctx, "oauth"+stateID, b, expiration).Err()
+	return rdb.Set(ctx, "oauth:"+redisKey, b, expiration).Err()
 }
 
-func GetTempUser(rdb *redis.Client, stateID string) (UserTempData, error) {
+func GetTempUser(rdb *redis.Client, redisKey string) (UserTempData, error) {
 	ctx := context.Background()
-	val, err := rdb.Get(ctx, "oauth"+stateID).Result()
+	val, err := rdb.Get(ctx, "oauth:"+redisKey).Result()
 	if err != nil {
 		return UserTempData{}, err
 	}
@@ -57,17 +57,17 @@ func GetTempUser(rdb *redis.Client, stateID string) (UserTempData, error) {
 	return data, err
 }
 
-func DeleteTempUser(rdb *redis.Client, stateID string) error {
+func DeleteTempUser(rdb *redis.Client, redisKey string) error {
 	ctx := context.Background()
-	return rdb.Del(ctx, "oauth:"+stateID).Err()
+	return rdb.Del(ctx, "oauth:"+redisKey).Err()
 }
 
-func GenerateStateID(rdb *redis.Client, info interface{}) string {
-	stateID := GenerateUUIDStr()
+func SetTempCustomer(rdb *redis.Client, info interface{}) string {
+	redisKey := GenerateUUIDStr()
 	data := UserTempData{
 		Info: info,
 	}
 
-	_ = SetTempUser(rdb, stateID, data, 5*time.Minute)
-	return stateID
+	_ = SetTempUser(rdb, redisKey, data, 5*time.Minute)
+	return redisKey
 }

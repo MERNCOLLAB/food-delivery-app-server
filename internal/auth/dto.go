@@ -42,14 +42,13 @@ type OAuthRequest struct {
 
 // Send and Validate Phone OTP
 type SendOTPRequest struct {
-	StateID string `json:"stateId"`
-	Phone   string `json:"phone"`
+	Phone string `json:"phone"`
 }
 
 type VerifyOTPRequest struct {
-	StateID string `json:"stateId"`
-	Phone   string `json:"phone"`
-	OTP     string `json:"otp"`
+	RedisKey string `json:"redisKey"`
+	Phone    string `json:"phone"`
+	OTP      string `json:"otp"`
 }
 
 // Admin Actions

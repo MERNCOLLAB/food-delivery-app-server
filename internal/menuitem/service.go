@@ -164,6 +164,16 @@ func (s *Service) DeleteMenuItem(userId, menuItemId string) error {
 	return nil
 }
 
-func (s *Service) GetMoreMenuItemDetails() {
+func (s *Service) GetMoreMenuItemDetails(menuItemId string) (*models.MenuItem, error) {
+	menuID, err := utils.ParseId(menuItemId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid Menu Item ID", err)
+	}
 
+	menuItem, err := s.repo.GetMenuItemDetails(menuID)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query the menu item details", err)
+	}
+
+	return menuItem, nil
 }

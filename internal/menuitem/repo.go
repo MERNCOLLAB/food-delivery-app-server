@@ -81,3 +81,14 @@ func (r *Repository) DeleteMenuItem(menuId uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *Repository) GetMenuItemDetails(menuID uuid.UUID) (*models.MenuItem, error) {
+	var menuItem models.MenuItem
+	if err := r.db.Where("id = ?", menuID).
+		First(&menuItem).
+		Error; err != nil {
+		return nil, err
+	}
+
+	return &menuItem, nil
+}

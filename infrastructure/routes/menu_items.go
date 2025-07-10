@@ -15,14 +15,14 @@ func RegisterMenuItemsRoutes(r *gin.Engine, DB *gorm.DB) {
 	menuItem := r.Group("/menu-items", middleware.JWTAuthMiddleware())
 	owner := menuItem.Group("/", middleware.RequireRoles(models.Owner))
 	{
-		owner.POST("/", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
+		owner.POST("/restaurant/:id", middleware.UploadImageValidator("image"), menuItemHandler.CreateMenuItem)
 		owner.PUT("/:id", middleware.UploadImageValidator("image", true), menuItemHandler.UpdateMenuItem)
 		owner.DELETE("/:id", menuItemHandler.DeleteMenuItem)
 	}
 
-	customer := r.Group("/", middleware.RequireRoles(models.Customer))
+	customer := menuItem.Group("/", middleware.RequireRoles(models.Customer))
 	{
-		customer.GET("/:id", menuItemHandler.GetMoreMenuItemDetails) // not yet functional
+		customer.GET("/:id", menuItemHandler.GetMoreMenuItemDetails)
 	}
 
 	ownerAndCust := menuItem.Group("/", middleware.RequireRoles(models.Owner, models.Customer))

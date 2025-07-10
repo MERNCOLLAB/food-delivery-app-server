@@ -44,6 +44,7 @@ type GetMenuItemByRestaurantResponse struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
+	Category    string  `json:"category"`
 	ImageURL    string  `json:"imageURL"`
 	IsAvailable bool    `json:"isAvailable"`
 }
@@ -55,6 +56,7 @@ func NewGetMenuItemByRestoResponse(menuItems []models.MenuItem) []GetMenuItemByR
 			Name:        items.Name,
 			Description: items.Description,
 			Price:       items.Price,
+			Category:    items.Category,
 			ImageURL:    items.ImageURL,
 			IsAvailable: items.IsAvailable,
 		}

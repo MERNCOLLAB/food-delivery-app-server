@@ -13,15 +13,16 @@ type PlaceOrderItem struct {
 
 type PlaceOrderRequest struct {
 	Items           []PlaceOrderItem `json:"items"`
-	DeliveryAddress string           `json:"deliveryAdddress"`
+	DeliveryAddress string           `json:"deliveryAddress"`
 	AddressID       *uuid.UUID       `json:"addressId,omitempty"`
 }
 
 type PlaceOrderResponse struct {
-	OrderID     uuid.UUID          `json:"orderId"`
-	Status      models.Status      `json:"status"`
-	TotalAmount float64            `json:"totalAmount"`
-	DeliveryFee float64            `json:"deliveryAddress"`
-	PlacedAt    string             `json:"placedAt"`
-	Items       []models.OrderItem `json:"items"`
+	OrderID         uuid.UUID          `json:"orderId"`
+	Status          models.Status      `json:"status"`
+	TotalAmount     float64            `json:"totalAmount"`
+	DeliveryFee     float64            `json:"deliveryFee"`
+	DeliveryAddress string             `json:"deliveryAddress"`
+	PlacedAt        string             `json:"placedAt"`
+	Items           []models.OrderItem `json:"items"`
 }

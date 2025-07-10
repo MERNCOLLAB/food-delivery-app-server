@@ -36,9 +36,9 @@ func RegisterOrderRoutes(r *gin.Engine, DB *gorm.DB) {
 
 	customer := order.Group("/", middleware.RequireRoles(models.Customer))
 	{
-		customer.POST("/restaurant/:id", orderHandler.PlaceOrder) //not yet functional
-		customer.GET("/", orderHandler.GetAllPersonalOrders)      //not yet functional
-		customer.PUT("/:id/cancel", orderHandler.CancelOrder)     //not yet functional
+		customer.POST("/restaurant/:id", orderHandler.PlaceOrder)
+		customer.GET("/", orderHandler.GetAllPersonalOrders)  //not yet functional
+		customer.PUT("/:id/cancel", orderHandler.CancelOrder) //not yet functional
 	}
 
 	driver := order.Group("/", middleware.RequireRoles(models.Driver))

@@ -13,6 +13,7 @@ type Order struct {
 	DriverID        *uuid.UUID `gorm:"type:uuid;index" json:"driverId"`
 	Status          Status     `gorm:"type:varchar(20);not null" json:"status"`
 	TotalAmount     float64    `gorm:"not null" json:"totalAmount"`
+	DeliveryFee     float64    `gorm:"not null" json:"deliveryFee"`
 	DeliveryAddress string     `gorm:"type:varchar(100)" json:"deliveryAddress"`
 	PlacedAt        time.Time  `gorm:"autoCreateTime" json:"placedAt"`
 	UpdatedAt       time.Time  `gorm:"autoUpdateTime" json:"updatedAt"`

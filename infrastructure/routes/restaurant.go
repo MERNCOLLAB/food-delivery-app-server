@@ -23,7 +23,6 @@ func RegisterRestaurantRoutes(r *gin.Engine, DB *gorm.DB) {
 
 	customer := restaurant.Group("/", middleware.RequireRoles(models.Customer))
 	{
-		customer.GET("/customer", restaurantHandler.GetAllRestaurants)              //not yet functional
-		customer.GET("/:id/menu-items", restaurantHandler.GetMoreRestaurantDetails) //not yet functional
+		customer.GET("/customer", restaurantHandler.GetAllRestaurants) //not yet functional
 	}
 }

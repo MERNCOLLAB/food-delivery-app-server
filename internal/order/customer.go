@@ -26,10 +26,6 @@ func (h *Handler) PlaceOrder(c *gin.Context) {
 	})
 }
 
-func (h *Handler) GetAllPersonalOrders(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get All Personal Orders Endpoint"})
-}
-
 func (h *Handler) CancelOrder(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Cancel Order Endpoint"})
 }

@@ -94,8 +94,18 @@ func (s *Service) GetOrderByRestaurant() {
 
 }
 
-func (s *Service) GetOrderDetails() {
+func (s *Service) GetOrderDetails(orderId string) (*models.Order, error) {
+	orID, err := utils.ParseId(orderId)
+	if err != nil {
+		return nil, appErr.NewInternal("Invalid ID", err)
+	}
 
+	order, err := s.repo.GetOrderDetailsByID(orID)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query order details", err)
+	}
+
+	return order, nil
 }
 
 func (s *Service) GetOrderHistory() {

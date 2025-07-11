@@ -17,7 +17,15 @@ func NewHandler(db *gorm.DB) *Handler {
 
 // All Roles
 func (h *Handler) GetOrderDetails(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Order Details Endpoint"})
+	orderId := c.Param("id")
+
+	order, err := h.service.GetOrderDetails(orderId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"orderDetails": order})
 }
 
 // Customer & Driver

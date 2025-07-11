@@ -20,8 +20,8 @@ type Order struct {
 
 	Payment    *Payment    `gorm:"foreignKey:OrderID" json:"payment,omitempty"`
 	Restaurant *Restaurant `gorm:"foreignKey:RestaurantID;references:ID;constraint:OnDelete:CASCADE" json:"restaurant,omitempty"`
-	Customer   *User       `gorm:"-" json:"customer,omitempty"`
-	Driver     *User       `gorm:"-" json:"driver,omitempty"`
+	Customer   *User       `gorm:"foreignKey:CustomerID;references:ID" json:"customer,omitempty"`
+	Driver     *User       `gorm:"foreignKey:DriverID;references:ID" json:"driver,omitempty"`
 
 	OrderItems    []OrderItem    `gorm:"foreignKey:OrderID;" json:"items,omitempty"`
 	Notifications []Notification `gorm:"foreignKey:OrderID" json:"notifications,omitempty"`

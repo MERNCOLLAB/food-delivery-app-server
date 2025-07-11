@@ -56,6 +56,23 @@ func (r *Repository) CreateNotification(notification *models.Notification) error
 	return r.db.Create(notification).Error
 }
 
+func (r *Repository) GetOrderDetailsByID(orID uuid.UUID) (*models.Order, error) {
+	var order models.Order
+
+	err := r.db.
+		Preload("OrderItems.MenuItem").
+		Preload("Restaurant").
+		Preload("Customer").
+		Preload("Driver").
+		First(&order, "id = ?", orID).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
+
 func (r *Repository) GetOrderByRestaurantID() {
 
 }

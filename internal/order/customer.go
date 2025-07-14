@@ -27,5 +27,18 @@ func (h *Handler) PlaceOrder(c *gin.Context) {
 }
 
 func (h *Handler) CancelOrder(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Cancel Order Endpoint"})
+	orderId := c.Param("id")
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := h.service.CancelOrder(orderId, userId); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Your order has been canceled"})
 }

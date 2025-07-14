@@ -18,13 +18,18 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) PlaceOrder(restaurantID string, orderReq PlaceOrderRequest) (*PlaceOrderResponse, error) {
+func (s *Service) PlaceOrder(restaurantID string, userID string, orderReq PlaceOrderRequest) (*PlaceOrderResponse, error) {
 	var totalAmount float64
 	var orderItems []models.OrderItem
 
 	restoID, err := utils.ParseId(restaurantID)
 	if err != nil {
 		return nil, appErr.NewBadRequest("Invalid Restaurant ID", err)
+	}
+
+	uID, err := utils.ParseId(userID)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid User ID", err)
 	}
 
 	for _, item := range orderReq.Items {
@@ -51,6 +56,7 @@ func (s *Service) PlaceOrder(restaurantID string, orderReq PlaceOrderRequest) (*
 	order := &models.Order{
 		ID:              orderID,
 		RestaurantID:    restoID,
+		CustomerID:      &uID,
 		Status:          models.Status("PENDING"),
 		TotalAmount:     totalAmount,
 		DeliveryFee:     deliveryFee,
@@ -149,6 +155,44 @@ func (s *Service) UpdateOrderStatus(req UpdateOrderStatusRequest, orderId string
 
 	if err := s.repo.UpdateOrderStatus(orID, req.Status); err != nil {
 		return appErr.NewInternal("Failed to update the order status", err)
+	}
+
+	return nil
+}
+
+func (s *Service) CancelOrder(orderId string, userId string) error {
+	orID, err := utils.ParseId(orderId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid order ID", err)
+	}
+
+	uID, err := utils.ParseId(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid user ID", err)
+	}
+
+	order, err := s.repo.GetOrderDetailsByID(orID)
+	if err != nil {
+		return appErr.NewInternal("Order not found", err)
+	}
+
+	if order.Status != models.Pending && order.Status != models.AcceptedByOwner {
+		return appErr.NewBadRequest("Order cannot be canceled at this stage", nil)
+	}
+
+	if order.CustomerID == nil || *order.CustomerID != uID {
+		return appErr.NewUnauthorized("You are not allowed to cancel this order", nil)
+	}
+
+	if order.Status == models.AcceptedByOwner {
+		if time.Since(order.UpdatedAt) > 3*time.Minute {
+			return appErr.NewBadRequest("You can only cancel within 3 minutes after acceptance", nil)
+		}
+	}
+
+	cancelStatus := string(models.Canceled)
+	if err := s.repo.UpdateOrderStatus(orID, cancelStatus); err != nil {
+		return appErr.NewInternal("Failed to cancel the order", err)
 	}
 
 	return nil

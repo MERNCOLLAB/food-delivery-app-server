@@ -13,5 +13,13 @@ func (h *Handler) GetAllRestaurants(c *gin.Context) {
 }
 
 func (h *Handler) GetMoreRestaurantDetails(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get More Restaurant Details Endpoint"})
+	restaurantId := c.Param("id")
+
+	restaurant, err := h.service.GetMoreRestaurantDetails(restaurantId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"restaurant": restaurant})
 }

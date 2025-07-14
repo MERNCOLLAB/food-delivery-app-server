@@ -216,8 +216,36 @@ func (s *Service) DeleteRestaurant(userId, restaurantId string) error {
 	return nil
 }
 
-func (s *Service) GetAllRestaurants() {
+func (s *Service) GetAllRestaurants() ([]GetAllRestaurantResponse, error) {
+	restaurants, err := s.repo.GetAllRestaurants()
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get all the restaurants", err)
+	}
 
+	var responses []GetAllRestaurantResponse
+	for _, restaurant := range restaurants {
+		owner, _ := s.repo.GetUserByID(restaurant.OwnerID)
+		address, _ := s.repo.GetAddressByRestaurantID(restaurant.ID)
+		resp := GetAllRestaurantResponse{
+			ID:          restaurant.ID.String(),
+			Name:        restaurant.Name,
+			Description: restaurant.Description,
+			Phone:       restaurant.Phone,
+			ImageURL:    restaurant.ImageURL,
+			OwnerFirst:  "",
+			OwnerLast:   "",
+			Address:     "",
+		}
+		if owner != nil {
+			resp.OwnerFirst = owner.FirstName
+			resp.OwnerLast = owner.LastName
+		}
+		if address != nil {
+			resp.Address = address.Address
+		}
+		responses = append(responses, resp)
+	}
+	return responses, nil
 }
 
 func (s *Service) GetMoreRestaurantDetails() {

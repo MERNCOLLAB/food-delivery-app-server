@@ -26,3 +26,20 @@ type PlaceOrderResponse struct {
 	PlacedAt        string             `json:"placedAt"`
 	Items           []models.OrderItem `json:"items"`
 }
+
+type UpdateOrderStatusRequest struct {
+	Status string `json:"status" binding:"required"`
+}
+
+var allowedStatusTransitions = map[models.Status][]models.Status{
+	models.Pending:          {models.AcceptedByOwner, models.RejectedByOwner, models.Canceled},
+	models.AcceptedByOwner:  {models.ReadyForPickUp, models.RejectedByOwner, models.Canceled},
+	models.ReadyForPickUp:   {models.AcceptedByDriver, models.RejectedByDriver},
+	models.AcceptedByDriver: {models.Assigned},
+	models.Assigned:         {models.InTransit},
+	models.InTransit:        {models.Delivered},
+	models.Delivered:        {},
+	models.RejectedByOwner:  {},
+	models.RejectedByDriver: {},
+	models.Canceled:         {},
+}

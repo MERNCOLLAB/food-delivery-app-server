@@ -77,6 +77,12 @@ func (r *Repository) GetOrderByRestaurantID() {
 
 }
 
-func (r *Repository) UpdateOrderStatus() {
+func (r *Repository) UpdateOrderStatus(orderID uuid.UUID, status string) error {
+	var order models.Order
+	if err := r.db.First(&order, "id = ?", orderID).Error; err != nil {
+		return err
+	}
 
+	order.Status = models.Status(status)
+	return r.db.Save(&order).Error
 }

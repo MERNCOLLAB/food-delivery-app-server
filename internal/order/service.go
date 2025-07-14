@@ -115,3 +115,41 @@ func (s *Service) GetOrderHistory() {
 func (s *Service) GetAvailableOrders() {
 
 }
+
+func (s *Service) UpdateOrderStatus(req UpdateOrderStatusRequest, orderId string) error {
+	orID, err := utils.ParseId(orderId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid order ID", err)
+	}
+
+	order, err := s.repo.GetOrderDetailsByID(orID)
+	if err != nil {
+		return appErr.NewInternal("Order not found", err)
+	}
+
+	currStatus := order.Status
+	newStatus := models.Status(req.Status)
+
+	allowedNext, ok := allowedStatusTransitions[currStatus]
+	if !ok {
+		return appErr.NewBadRequest("Invalid current order status", nil)
+	}
+
+	valid := false
+	for _, s := range allowedNext {
+		if s == newStatus {
+			valid = true
+			break
+		}
+	}
+
+	if !valid {
+		return appErr.NewBadRequest("Invalid status request", nil)
+	}
+
+	if err := s.repo.UpdateOrderStatus(orID, req.Status); err != nil {
+		return appErr.NewInternal("Failed to update the order status", err)
+	}
+
+	return nil
+}

@@ -1,6 +1,8 @@
 package order
 
 import (
+	http_helper "food-delivery-app-server/pkg/http"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -35,5 +37,18 @@ func (h *Handler) GetOrderHistory(c *gin.Context) {
 
 // Owner & Driver
 func (h *Handler) UpdateOrderStatus(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Update Order Endpoint"})
+	orderId := c.Param("id")
+
+	req, err := http_helper.BindJSON[UpdateOrderStatusRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := h.service.UpdateOrderStatus(*req, orderId); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Order status had been updated"})
 }

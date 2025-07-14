@@ -38,6 +38,7 @@ type UpdateRestaurantResponse struct {
 	ImageURL    *string `json:"imageURL,omitempty"`
 }
 
+// Get Restaurant By Owner
 type GetRestaurantResponse struct {
 	Name           *string `json:"name"`
 	OwnerFirstName *string `json:"ownerFirstName"`
@@ -61,4 +62,39 @@ func NewGetRestaurantResponse(restaurant *models.Restaurant, owner *models.User)
 		Phone:          &restaurant.Phone,
 		ImageURL:       &restaurant.ImageURL,
 	}
+}
+
+// Get All Restaurants (for Customer)
+type GetAllRestaurantResponse struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Phone       string `json:"phone"`
+	ImageURL    string `json:"imageUrl"`
+	OwnerFirst  string `json:"ownerFirstName"`
+	OwnerLast   string `json:"ownerLastName"`
+	Address     string `json:"address"`
+}
+
+// Get Restaurant Details and Menu Items (for Customer)
+type MenuItemDetails struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	Category    string  `json:"category"`
+	ImageURL    string  `json:"imageUrl"`
+	IsAvailable bool    `json:"isAvailable"`
+}
+
+type GetMoreRestaurantDetailsResponse struct {
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Phone       string            `json:"phone"`
+	ImageURL    string            `json:"imageUrl"`
+	OwnerFirst  string            `json:"ownerFirstName"`
+	OwnerLast   string            `json:"ownerLastName"`
+	Address     string            `json:"address"`
+	MenuItems   []MenuItemDetails `json:"menuItems"`
 }

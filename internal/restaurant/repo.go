@@ -97,3 +97,21 @@ func (r *Repository) DeleteRestaurant(restoId uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *Repository) GetAllRestaurants() ([]models.Restaurant, error) {
+
+	var restaurants []models.Restaurant
+	if err := r.db.Find(&restaurants).Error; err != nil {
+		return nil, err
+	}
+
+	return restaurants, nil
+}
+
+func (r *Repository) GetMenuItemByRestaurantID(restoID uuid.UUID) ([]models.MenuItem, error) {
+	var items []models.MenuItem
+	if err := r.db.Where("restaurant_id = ?", restoID).Find(&items).Error; err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -216,10 +216,84 @@ func (s *Service) DeleteRestaurant(userId, restaurantId string) error {
 	return nil
 }
 
-func (s *Service) GetAllRestaurants() {
+func (s *Service) GetAllRestaurants() ([]GetAllRestaurantResponse, error) {
+	restaurants, err := s.repo.GetAllRestaurants()
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get all the restaurants", err)
+	}
 
+	var responses []GetAllRestaurantResponse
+	for _, restaurant := range restaurants {
+		owner, _ := s.repo.GetUserByID(restaurant.OwnerID)
+		address, _ := s.repo.GetAddressByRestaurantID(restaurant.ID)
+		resp := GetAllRestaurantResponse{
+			ID:          restaurant.ID.String(),
+			Name:        restaurant.Name,
+			Description: restaurant.Description,
+			Phone:       restaurant.Phone,
+			ImageURL:    restaurant.ImageURL,
+			OwnerFirst:  "",
+			OwnerLast:   "",
+			Address:     "",
+		}
+		if owner != nil {
+			resp.OwnerFirst = owner.FirstName
+			resp.OwnerLast = owner.LastName
+		}
+		if address != nil {
+			resp.Address = address.Address
+		}
+		responses = append(responses, resp)
+	}
+	return responses, nil
 }
 
-func (s *Service) GetMoreRestaurantDetails() {
+func (s *Service) GetMoreRestaurantDetails(restaurantId string) (*GetMoreRestaurantDetailsResponse, error) {
+	restoId, err := utils.ParseId(restaurantId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid Restaurant ID", err)
+	}
+
+	restaurant, err := s.repo.GetRestaurantByID(restoId)
+	if err != nil {
+		return nil, appErr.NewNotFound("Restaurant not found", err)
+	}
+
+	owner, _ := s.repo.GetUserByID(restaurant.OwnerID)
+	address, _ := s.repo.GetAddressByRestaurantID(restaurant.ID)
+	menuItems, _ := s.repo.GetMenuItemByRestaurantID(restaurant.ID)
+
+	var menuItemDetails []MenuItemDetails
+	for _, item := range menuItems {
+		menuItemDetails = append(menuItemDetails, MenuItemDetails{
+			ID:          item.ID.String(),
+			Name:        item.Name,
+			Description: item.Description,
+			Price:       item.Price,
+			Category:    item.Category,
+			ImageURL:    item.ImageURL,
+			IsAvailable: item.IsAvailable,
+		})
+	}
+
+	resp := &GetMoreRestaurantDetailsResponse{
+		ID:          restaurant.ID.String(),
+		Name:        restaurant.Name,
+		Description: restaurant.Description,
+		Phone:       restaurant.Phone,
+		ImageURL:    restaurant.ImageURL,
+		OwnerFirst:  "",
+		OwnerLast:   "",
+		Address:     "",
+		MenuItems:   menuItemDetails,
+	}
+	if owner != nil {
+		resp.OwnerFirst = owner.FirstName
+		resp.OwnerLast = owner.LastName
+	}
+	if address != nil {
+		resp.Address = address.Address
+	}
+	return resp, nil
 
 }

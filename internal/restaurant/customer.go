@@ -3,9 +3,23 @@ package restaurant
 import "github.com/gin-gonic/gin"
 
 func (h *Handler) GetAllRestaurants(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get ALl Restaurants Endpoint"})
+	restaurants, err := h.service.GetAllRestaurants()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, restaurants)
 }
 
 func (h *Handler) GetMoreRestaurantDetails(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get More Restaurant Details Endpoint"})
+	restaurantId := c.Param("id")
+
+	restaurant, err := h.service.GetMoreRestaurantDetails(restaurantId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"restaurant": restaurant})
 }

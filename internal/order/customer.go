@@ -8,13 +8,20 @@ import (
 
 func (h *Handler) PlaceOrder(c *gin.Context) {
 	restaurantID := c.Param("id")
+
+	userID, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	req, err := http_helper.BindJSON[PlaceOrderRequest](c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	orderRes, err := h.service.PlaceOrder(restaurantID, *req)
+	orderRes, err := h.service.PlaceOrder(restaurantID, userID, *req)
 	if err != nil {
 		c.Error(err)
 		return

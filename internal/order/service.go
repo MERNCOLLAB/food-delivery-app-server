@@ -18,13 +18,18 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) PlaceOrder(restaurantID string, orderReq PlaceOrderRequest) (*PlaceOrderResponse, error) {
+func (s *Service) PlaceOrder(restaurantID string, userID string, orderReq PlaceOrderRequest) (*PlaceOrderResponse, error) {
 	var totalAmount float64
 	var orderItems []models.OrderItem
 
 	restoID, err := utils.ParseId(restaurantID)
 	if err != nil {
 		return nil, appErr.NewBadRequest("Invalid Restaurant ID", err)
+	}
+
+	uID, err := utils.ParseId(userID)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid User ID", err)
 	}
 
 	for _, item := range orderReq.Items {
@@ -51,6 +56,7 @@ func (s *Service) PlaceOrder(restaurantID string, orderReq PlaceOrderRequest) (*
 	order := &models.Order{
 		ID:              orderID,
 		RestaurantID:    restoID,
+		CustomerID:      &uID,
 		Status:          models.Status("PENDING"),
 		TotalAmount:     totalAmount,
 		DeliveryFee:     deliveryFee,
@@ -179,7 +185,7 @@ func (s *Service) CancelOrder(orderId string, userId string) error {
 	}
 
 	if order.Status == models.AcceptedByOwner {
-		if time.Since(order.UpdatedAt) > 1*time.Minute {
+		if time.Since(order.UpdatedAt) > 3*time.Minute {
 			return appErr.NewBadRequest("You can only cancel within 3 minutes after acceptance", nil)
 		}
 	}

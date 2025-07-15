@@ -17,9 +17,9 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-var user models.User
-
 func (r *Repository) UpdateUser(uid uuid.UUID, req UpdateUserRequest) (*models.User, error) {
+	var user models.User
+
 	if err := r.db.First(&user, "id = ?", uid).Error; err != nil {
 		return nil, err
 	}
@@ -36,6 +36,8 @@ func (r *Repository) UpdateUser(uid uuid.UUID, req UpdateUserRequest) (*models.U
 }
 
 func (r *Repository) FindUserByID(uid uuid.UUID) (*models.User, error) {
+	var user models.User
+
 	if err := r.db.First(&user, "id = ?", uid).Error; err != nil {
 		return nil, err
 	}
@@ -43,6 +45,8 @@ func (r *Repository) FindUserByID(uid uuid.UUID) (*models.User, error) {
 }
 
 func (r *Repository) UpdateProfilePictureURL(uid uuid.UUID, url string) error {
+	var user models.User
+
 	if err := r.db.First(&user, "id = ?", uid).Error; err != nil {
 		return err
 	}
@@ -65,4 +69,12 @@ func (r *Repository) GetAllUsers() ([]models.User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *Repository) GetAllAdmins() ([]models.User, error) {
+	var admins []models.User
+	if err := r.db.Where("role = ?", "ADMIN").Find(&admins).Error; err != nil {
+		return nil, err
+	}
+	return admins, nil
 }

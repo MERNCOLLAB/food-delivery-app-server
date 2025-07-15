@@ -45,6 +45,7 @@ type GetUserResponse struct {
 	Bio            *string     `json:"bio,omitempty"`
 	ProfilePicture *string     `json:"profilePicture,omitempty"`
 	Phone          *string     `json:"phone,omitempty"`
+	Branch         *string     `json:"branch,omitempty"`
 	Role           models.Role `json:"role,omitempty"`
 }
 
@@ -56,6 +57,7 @@ func NewGetUserResponse(user *models.User) GetUserResponse {
 		Bio:            &user.Bio,
 		Phone:          &user.Phone,
 		ProfilePicture: &user.ProfilePicture,
+		Branch:         user.Branch,
 		Role:           user.Role,
 	}
 }

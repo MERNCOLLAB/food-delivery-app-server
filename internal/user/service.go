@@ -107,3 +107,56 @@ func (s *Service) GetAllUsers() ([]GetUserResponse, error) {
 
 	return userResponse, nil
 }
+
+func (s *Service) GetAllAdmins() ([]GetUserResponse, error) {
+	admins, err := s.repo.GetAllAdmins()
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query all admins", err)
+	}
+
+	var adminResp []GetUserResponse
+	for _, admin := range admins {
+		adminResp = append(adminResp, NewGetUserResponse(&admin))
+	}
+	return adminResp, nil
+}
+
+func (s *Service) GetDriverProfile(driverId string) (*GetUserResponse, error) {
+	dr, err := utils.ParseId(driverId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid Driver ID", err)
+	}
+
+	user, err := s.repo.FindUserByID(dr)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to find user with provided ID", err)
+	}
+
+	if user.Role != "DRIVER" {
+		return nil, appErr.NewBadRequest("Incorrect role from the user", nil)
+	}
+
+	userResp := NewGetUserResponse(user)
+
+	return &userResp, nil
+}
+
+func (s *Service) GetCustomerProfile(customerId string) (*GetUserResponse, error) {
+	custId, err := utils.ParseId(customerId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid Customer ID", err)
+	}
+
+	user, err := s.repo.FindUserByID(custId)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to find user with provided ID", err)
+	}
+
+	if user.Role != "CUSTOMER" {
+		return nil, appErr.NewBadRequest("Incorrect role from the user", nil)
+	}
+
+	userResp := NewGetUserResponse(user)
+
+	return &userResp, nil
+}

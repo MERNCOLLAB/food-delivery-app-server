@@ -107,3 +107,16 @@ func (s *Service) GetAllUsers() ([]GetUserResponse, error) {
 
 	return userResponse, nil
 }
+
+func (s *Service) GetAllAdmins() ([]GetUserResponse, error) {
+	admins, err := s.repo.GetAllAdmins()
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to query all admins", err)
+	}
+
+	var adminResp []GetUserResponse
+	for _, admin := range admins {
+		adminResp = append(adminResp, NewGetUserResponse(&admin))
+	}
+	return adminResp, nil
+}

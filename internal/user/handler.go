@@ -110,3 +110,13 @@ func (h *Handler) GetAllUsers(c *gin.Context) {
 		"allUsers": users,
 	})
 }
+
+func (h *Handler) GetAllAdmin(c *gin.Context) {
+	admins, err := h.service.GetAllAdmins()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, admins)
+}

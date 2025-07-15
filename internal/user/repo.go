@@ -66,3 +66,11 @@ func (r *Repository) GetAllUsers() ([]models.User, error) {
 	}
 	return users, nil
 }
+
+func (r *Repository) GetAllAdmins() ([]models.User, error) {
+	var admins []models.User
+	if err := r.db.Where("role = ?", "ADMIN").Find(&admins).Error; err != nil {
+		return nil, err
+	}
+	return admins, nil
+}

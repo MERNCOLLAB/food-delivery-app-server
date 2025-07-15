@@ -130,9 +130,17 @@ func (h *Handler) GetDriverProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, driver)
+	c.JSON(200, gin.H{"user": driver})
 }
 
 func (h *Handler) GetCustomerProfile(c *gin.Context) {
+	customerId := c.Param("id")
 
+	customer, err := h.service.GetCustomerProfile(customerId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"user": customer})
 }

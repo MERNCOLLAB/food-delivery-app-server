@@ -26,7 +26,7 @@ func RegisterUserRoutes(r *gin.Engine, DB *gorm.DB) {
 		userGroup.DELETE("/delete", userHandler.DeleteUser)
 		userGroup.GET("/", middleware.RequireRoles(models.Admin), userHandler.GetAllUsers)
 		userGroup.GET("/driver/:id", userHandler.GetDriverProfile)
-		userGroup.GET("/customer") //Not Yet Functional
+		userGroup.GET("/customer/:id", userHandler.GetCustomerProfile)
 	}
 
 }

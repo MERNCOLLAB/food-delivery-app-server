@@ -141,6 +141,22 @@ func (s *Service) GetDriverProfile(driverId string) (*GetUserResponse, error) {
 	return &userResp, nil
 }
 
-func (s *Service) GetCustomerProfile() {
+func (s *Service) GetCustomerProfile(customerId string) (*GetUserResponse, error) {
+	custId, err := utils.ParseId(customerId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid Customer ID", err)
+	}
 
+	user, err := s.repo.FindUserByID(custId)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to find user with provided ID", err)
+	}
+
+	if user.Role != "CUSTOMER" {
+		return nil, appErr.NewBadRequest("Incorrect role from the user", nil)
+	}
+
+	userResp := NewGetUserResponse(user)
+
+	return &userResp, nil
 }

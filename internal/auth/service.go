@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"food-delivery-app-server/models"
+	"food-delivery-app-server/pkg/email"
 	appErr "food-delivery-app-server/pkg/errors"
 	"food-delivery-app-server/pkg/geocode"
 	"food-delivery-app-server/pkg/oauth"
+	"food-delivery-app-server/pkg/password"
 	"food-delivery-app-server/pkg/sms"
 	"food-delivery-app-server/pkg/utils"
 
@@ -27,50 +29,66 @@ func NewService(repo *Repository, rdb *redis.Client) *Service {
 	return &Service{repo: repo, rdb: rdb}
 }
 
-func (s *Service) SignUpDriver(req SignUpRequest) (string, error) {
+func (s *Service) SignUp(req SignUpRequest, role string) (*JWTAuthResponse, string, error) {
 	// Missing Required Validation
 	if req.Email == "" || req.Address == "" ||
 		req.FirstName == "" || req.LastName == "" || req.Bio == "" || req.Phone == "" {
-		return "", appErr.NewBadRequest("Missing required fields", nil)
+		return nil, "", appErr.NewBadRequest("Missing required fields", nil)
 	}
 
 	// Validate Phone Format
 	if err := sms.ValidatePhone(req.Phone); err != nil {
-		return "", appErr.NewBadRequest("Invalid Phone Number Format", err)
+		return nil, "", appErr.NewBadRequest("Invalid Phone Number Format", err)
 	}
 
 	// Existing User Validation
 	existingUser, err := s.repo.FindUserByEmail(req.Email)
 	if err != nil {
-		return "", appErr.NewBadRequest("Failed to verify if the email exists", err)
+		return nil, "", appErr.NewBadRequest("Failed to verify if the email exists", err)
 	}
 
 	if existingUser != nil {
-		return "", appErr.NewBadRequest("User with that email already exists", nil)
+		return nil, "", appErr.NewBadRequest("User with that email already exists", nil)
+	}
+
+	// Validate Role
+	if role != "driver" && role != "owner" {
+		return nil, "", appErr.NewBadRequest("The role provided is not allowed", nil)
 	}
 
 	// User and Address Data Preparation
 	userId := utils.GenerateUUID()
 	addressId := utils.GenerateUUID()
 
+	// Generate Default Password
+	defaultPassword := password.GenerateRandomPassword(7)
+	hashedDefaultPass, err := utils.HashPassword(defaultPassword)
+	if err != nil {
+		return nil, "", appErr.NewInternal("Failed to hash the password", err)
+	}
+
+	// Role field preparation
+	rol := models.Role(strings.ToUpper(role))
+
 	newUser := &models.User{
 		ID:             userId,
 		FirstName:      req.FirstName,
 		LastName:       req.LastName,
+		Password:       hashedDefaultPass,
 		Email:          req.Email,
 		ProfilePicture: DefaultProfilePic,
 		Bio:            req.Bio,
 		Phone:          req.Phone,
-		Role:           models.Role(req.Role),
+		Role:           rol,
 	}
 
 	ctx := context.Background()
 	lat, long, err := geocode.Geocode(ctx, req.Address)
 	if err != nil {
-		return "", appErr.NewInternal("Failed to geocode the provided address", err)
+		return nil, "", appErr.NewInternal("Failed to geocode the provided address", err)
 	}
 
-	newAddress := &models.Address{
+	newAddr := &models.Address{
 		ID:        addressId,
 		UserID:    &userId,
 		Address:   req.Address,
@@ -79,25 +97,24 @@ func (s *Service) SignUpDriver(req SignUpRequest) (string, error) {
 		Longitude: long,
 	}
 
-	// Marshal the Data for Redis Storage
-	pendingSignUpID := utils.GenerateUUIDStr()
-	pendingData := map[string]interface{}{
-		"user":    newUser,
-		"address": newAddress,
-	}
-
-	data, err := json.Marshal(pendingData)
+	createdUser, err := s.repo.CreateUser(newUser, newAddr)
 	if err != nil {
-		return "", appErr.NewInternal("Failed to serialize pending signup data", err)
+		return nil, "", appErr.NewInternal("Failed to create a new user at the database", err)
 	}
 
-	expiry := 30 * time.Minute
-	err = s.rdb.Set(ctx, "pending_signup:"+pendingSignUpID, data, expiry).Err()
+	_ = email.SendWelcomeWithPassword(createdUser.Email, defaultPassword)
+
+	signUpRes := JWTAuthResponse{
+		ID:   createdUser.ID.String(),
+		Role: string(createdUser.Role),
+	}
+
+	token, err := utils.GenerateJWT(createdUser)
 	if err != nil {
-		return "", appErr.NewInternal("Failed to store pending signup in Redis", err)
+		return nil, "", appErr.NewInternal("Failed to generate token", err)
 	}
 
-	return pendingSignUpID, nil
+	return &signUpRes, token, nil
 }
 
 func (s *Service) SignIn(req SignInRequest) (*JWTAuthResponse, string, error) {
@@ -122,12 +139,12 @@ func (s *Service) SignIn(req SignInRequest) (*JWTAuthResponse, string, error) {
 		return nil, "", appErr.NewInternal("Failed to generate token", err)
 	}
 
-	userResponse := JWTAuthResponse{
+	userResp := JWTAuthResponse{
 		ID:   user.ID.String(),
 		Role: string(user.Role),
 	}
 
-	return &userResponse, token, nil
+	return &userResp, token, nil
 }
 
 func (s *Service) OAuthSignUp(req OAuthRequest, provider string) (string, error) {
@@ -266,7 +283,7 @@ func (s *Service) VerifyOTP(req VerifyOTPRequest) (*JWTAuthResponse, string, err
 		Provider:       info.Provider,
 	}
 
-	createdUser, err := s.repo.CreateUser(newUser)
+	createdUser, err := s.repo.CreateUser(newUser, nil)
 	if err != nil {
 		return nil, "", appErr.NewInternal("Failed to create user at database", err)
 	}

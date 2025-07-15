@@ -21,22 +21,25 @@ func NewHandler(db *gorm.DB, rdb *redis.Client) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) SignUpDriver(c *gin.Context) {
+func (h *Handler) SignUp(c *gin.Context) {
+	role := c.Param("role")
 	req, err := http_helper.BindJSON[SignUpRequest](c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	signUpID, err := h.service.SignUpDriver(*req)
+	newUser, token, err := h.service.SignUp(*req, role)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
+	utils.SetCookie(c, token, 3600*5)
+
 	c.JSON(200, gin.H{
-		"message":  "Your application has been sent to admin for approval",
-		"signUpID": signUpID,
+		"message": "A new user has been created. Email was sent to the user with temporary password",
+		"user":    newUser,
 	})
 }
 

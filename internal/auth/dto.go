@@ -19,8 +19,6 @@ type SignUpRequest struct {
 	Bio       string
 	Phone     string
 	Address   string
-	Token     string
-	Role      Role
 }
 
 type JWTAuthResponse struct {

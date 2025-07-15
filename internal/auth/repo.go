@@ -25,19 +25,31 @@ func (r *Repository) FindUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *Repository) CreateUser(user *models.User) (*models.User, error) {
+func (r *Repository) CreateUser(user *models.User, addr *models.Address) (*models.User, error) {
+	tx := r.db.Begin()
 	if err := r.db.Create(user).Error; err != nil {
+		tx.Rollback()
 		return nil, err
 	}
+
+	if addr != nil {
+		if err := r.db.Create(addr).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+	}
+
+	tx.Commit()
+
 	return user, nil
 }
 
-func (r *Repository) CreateAddress(address *models.Address) (*models.Address, error) {
-	if err := r.db.Create(address).Error; err != nil {
-		return nil, err
-	}
-	return address, nil
-}
+// func (r *Repository) CreateAddress(address *models.Address) (*models.Address, error) {
+// 	if err := r.db.Create(address).Error; err != nil {
+// 		return nil, err
+// 	}
+// 	return address, nil
+// }
 
 func (r *Repository) FindFacebookUserByProfilePicturePrefix(string) (*models.User, error) {
 	prefix := "https://platform-lookaside.fbsbx.com"

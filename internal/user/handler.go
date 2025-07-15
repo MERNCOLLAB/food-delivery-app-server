@@ -120,3 +120,19 @@ func (h *Handler) GetAllAdmin(c *gin.Context) {
 
 	c.JSON(200, admins)
 }
+
+func (h *Handler) GetDriverProfile(c *gin.Context) {
+	driverId := c.Param("id")
+
+	driver, err := h.service.GetDriverProfile(driverId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, driver)
+}
+
+func (h *Handler) GetCustomerProfile(c *gin.Context) {
+
+}

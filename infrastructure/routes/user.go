@@ -14,7 +14,7 @@ func RegisterUserRoutes(r *gin.Engine, DB *gorm.DB) {
 
 	public := r.Group("/users")
 	{
-		public.GET("/admin", userHandler.GetAllAdmin) //Not Yet Functional
+		public.GET("/admin", userHandler.GetAllAdmin)
 	}
 
 	userGroup := r.Group("/users", middleware.JWTAuthMiddleware())
@@ -25,7 +25,7 @@ func RegisterUserRoutes(r *gin.Engine, DB *gorm.DB) {
 			userHandler.UpdateProfilePicture)
 		userGroup.DELETE("/delete", userHandler.DeleteUser)
 		userGroup.GET("/", middleware.RequireRoles(models.Admin), userHandler.GetAllUsers)
-		userGroup.GET("/driver")   //Not Yet Functional
+		userGroup.GET("/driver/:id", userHandler.GetDriverProfile)
 		userGroup.GET("/customer") //Not Yet Functional
 	}
 

@@ -17,6 +17,7 @@ type User struct {
 	Phone          string    `gorm:"type:varchar(20)" json:"phone"`
 	Role           Role      `gorm:"type:varchar(20)" json:"role"`
 	Provider       string    `gorm:"type:text" json:"provider"`
+	Branch         *string   `gorm:"type:text" json:"branch"`
 
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`

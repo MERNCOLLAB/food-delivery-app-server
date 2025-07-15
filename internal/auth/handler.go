@@ -22,21 +22,24 @@ func NewHandler(db *gorm.DB, rdb *redis.Client) *Handler {
 }
 
 func (h *Handler) SignUp(c *gin.Context) {
+	role := c.Param("role")
 	req, err := http_helper.BindJSON[SignUpRequest](c)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	signUpID, err := h.service.SignUp(*req)
+	newUser, token, err := h.service.SignUp(*req, role)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
+	utils.SetCookie(c, token, 3600*5)
+
 	c.JSON(200, gin.H{
-		"message":  "Your application has been sent to admin for approval",
-		"signUpID": signUpID,
+		"message": "A new user has been created. Email was sent to the user with temporary password",
+		"user":    newUser,
 	})
 }
 
@@ -145,54 +148,5 @@ func (h *Handler) SignOut(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"message": "You have signed out successfully",
-	})
-}
-
-func (h *Handler) SendSignUpForm(c *gin.Context) {
-	req, err := http_helper.BindJSON[SendSignUpFormRequest](c)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	if err := h.service.SendSignUpForm(*req); err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"message": "A sign up form invitation with link was sent to the provided email",
-	})
-}
-
-func (h *Handler) SignUpDecision(c *gin.Context) {
-	signUpID := c.Param("id")
-	req, err := http_helper.BindJSON[SignUpDecisionRequest](c)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	userResData, token, err := h.service.SignUpDecision(*req, signUpID)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	if req.IsAccepted == nil {
-		c.JSON(400, gin.H{"error": "isAccepted is required"})
-		return
-	}
-
-	if !*req.IsAccepted {
-		c.JSON(200, gin.H{"message": "Sign Up Application has been rejected"})
-		return
-	}
-
-	utils.SetCookie(c, token, 3600*5)
-
-	c.JSON(200, gin.H{
-		"message": "Sign Up Application has been decided",
-		"user":    userResData,
 	})
 }

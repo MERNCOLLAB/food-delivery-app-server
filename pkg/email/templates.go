@@ -40,3 +40,22 @@ const SignUpFormTemplate = `
             If you did not expect this invitation, you can ignore this email.
         </p>
     </div>`
+
+const WelcomeWithPasswordTemplate = `
+    <div style="font-family: Arial, sans-serif; line-height:1.6; color: #545454;">
+        <h1 style="font-size: 24px; font-weight: bold; color:#d417ff">
+            Welcome to Food Delivery App!
+        </h1>
+        <p style="font-size:16px; margin-bottom:10px">
+            Your account has been created.<br>
+            Here is your temporary password:
+            <strong style="font-size: 18px; color:#d417ff;">%s</strong>
+        </p>
+        <p style="font-size: 14px; margin-bottom: 20px;">
+            Please use this password to log in for the first time. You can change your password after logging in.
+        </p>
+        <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
+        <p style="font-size: 12px; color: #999;">
+            If you did not expect this email, please ignore it.
+        </p>
+    </div>`

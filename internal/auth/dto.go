@@ -13,16 +13,12 @@ const (
 )
 
 type SignUpRequest struct {
-	FirstName       string
-	LastName        string
-	Email           string
-	Bio             string
-	Phone           string
-	Address         string
-	Password        string
-	ConfirmPassword string
-	Token           string
-	Role            Role
+	FirstName string
+	LastName  string
+	Email     string
+	Bio       string
+	Phone     string
+	Address   string
 }
 
 type JWTAuthResponse struct {

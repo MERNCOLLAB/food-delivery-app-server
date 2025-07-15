@@ -70,3 +70,22 @@ func SendSignUpForm(to, role, sigupURL string) error {
 	addr := smtpServer + ":" + smtpPort
 	return smtp.SendMail(addr, auth, sender, []string{to}, msg)
 }
+
+func SendWelcomeWithPassword(to, password string) error {
+	smtpServer, smtpPort, sender, smtpPassword := getSMTPConfig()
+	emailBody := fmt.Sprintf(WelcomeWithPasswordTemplate, password)
+
+	subject := "Welcome to Food Delivery App - Your Login Password"
+	body := emailBody
+	msg := []byte("Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=\"UTF-8\"\r\n" +
+		"To: " + to + "\r\n" +
+		"From: " + sender + "\r\n" +
+		"\r\n" +
+		body + "\r\n")
+
+	auth := smtp.PlainAuth("", sender, smtpPassword, smtpServer)
+	addr := smtpServer + ":" + smtpPort
+	return smtp.SendMail(addr, auth, sender, []string{to}, msg)
+}

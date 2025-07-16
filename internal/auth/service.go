@@ -164,6 +164,13 @@ func (s *Service) OAuthSignUp(req OAuthRequest, provider string) (string, error)
 		return "", appErr.NewBadRequest("Failed to verify token", err)
 	}
 
+	user, err := s.repo.FindUserByEmail(info.Email)
+	if err != nil {
+		return "", appErr.NewInternal("Failed to check existing user", err)
+	}
+	if user != nil {
+		return "", appErr.NewBadRequest("User with that email already exists", nil)
+	}
 	redisKey := utils.SetTempCustomer(s.rdb, info)
 
 	return redisKey, nil

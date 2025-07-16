@@ -96,8 +96,18 @@ func (s *Service) PlaceOrder(restaurantID string, userID string, orderReq PlaceO
 	return orderRes, nil
 }
 
-func (s *Service) GetOrderByRestaurant() {
+func (s *Service) GetOrderByRestaurant(restaurantID string) ([]models.Order, error) {
+	restoID, err := utils.ParseId(restaurantID)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid restaurant ID", err)
+	}
 
+	orders, err := s.repo.GetOrdersByRestaurantID(restoID)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get orders for restaurant", err)
+	}
+
+	return orders, nil
 }
 
 func (s *Service) GetOrderDetails(orderId string) (*models.Order, error) {
@@ -114,8 +124,23 @@ func (s *Service) GetOrderDetails(orderId string) (*models.Order, error) {
 	return order, nil
 }
 
-func (s *Service) GetOrderHistory() {
+func (s *Service) GetOrderHistory(userId string) ([]models.Order, error) {
+	uID, err := utils.ParseId(userId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid user ID", err)
+	}
 
+	role, err := s.repo.GetUserRoleByID(uID)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get user role", err)
+	}
+
+	orders, err := s.repo.GetOrderHistoryByUser(uID, role)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get the order history", err)
+	}
+
+	return orders, nil
 }
 
 func (s *Service) GetAvailableOrders() {

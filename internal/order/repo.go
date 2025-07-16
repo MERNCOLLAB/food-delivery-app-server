@@ -86,3 +86,50 @@ func (r *Repository) UpdateOrderStatus(orderID uuid.UUID, status string) error {
 	order.Status = models.Status(status)
 	return r.db.Save(&order).Error
 }
+
+func (r *Repository) GetOrderHistoryByUser(uID uuid.UUID, role string) ([]models.Order, error) {
+	var orders []models.Order
+
+	query := r.db.
+		Preload("OrderItems.MenuItem").
+		Preload("Restaurant").
+		Order("placed_at DESC")
+
+	switch role {
+	case "CUSTOMER":
+		query = query.Where("customer_id = ?", uID)
+	case "DRIVER":
+		query = query.Where("driver_id = ?", uID)
+	default:
+		return nil, nil
+	}
+
+	if err := query.Find(&orders).Error; err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+func (r *Repository) GetUserRoleByID(uID uuid.UUID) (string, error) {
+	var user models.User
+	if err := r.db.Select("role").First(&user, "id = ?", uID).Error; err != nil {
+		return "", err
+	}
+	return string(user.Role), nil
+}
+
+func (r *Repository) GetOrdersByRestaurantID(restoID uuid.UUID) ([]models.Order, error) {
+	var orders []models.Order
+	err := r.db.
+		Preload("OrderItems.MenuItem").
+		Preload("Customer").
+		Preload("Driver").
+		Where("restaurant_id = ?", restoID).
+		Order("placed_at DESC").
+		Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}

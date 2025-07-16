@@ -118,3 +118,18 @@ func (r *Repository) GetUserRoleByID(uID uuid.UUID) (string, error) {
 	}
 	return string(user.Role), nil
 }
+
+func (r *Repository) GetOrdersByRestaurantID(restoID uuid.UUID) ([]models.Order, error) {
+	var orders []models.Order
+	err := r.db.
+		Preload("OrderItems.MenuItem").
+		Preload("Customer").
+		Preload("Driver").
+		Where("restaurant_id = ?", restoID).
+		Order("placed_at DESC").
+		Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}

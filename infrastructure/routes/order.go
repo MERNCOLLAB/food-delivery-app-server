@@ -27,7 +27,7 @@ func RegisterOrderRoutes(r *gin.Engine, DB *gorm.DB) {
 
 	owner := order.Group("/", middleware.RequireRoles(models.Owner))
 	{
-		owner.GET("/restaurant/:id", orderHandler.GetOrderByRestaurant) //not yet functional
+		owner.GET("/restaurant/:id", orderHandler.GetOrderByRestaurant)
 	}
 
 	customer := order.Group("/", middleware.RequireRoles(models.Customer))

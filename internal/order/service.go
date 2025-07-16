@@ -145,7 +145,7 @@ func (s *Service) GetOrderHistory(userId string) ([]models.Order, error) {
 
 func (s *Service) GetAvailableOrders() ([]models.Order, error) {
 	status := models.ReadyForPickUp
-	orders, err := s.repo.GetOrderByStatus(status, nil)
+	orders, err := s.repo.GetOrderByStatus(status)
 	if err != nil {
 		return nil, appErr.NewInternal("Failed to get available orders", err)
 	}
@@ -153,27 +153,24 @@ func (s *Service) GetAvailableOrders() ([]models.Order, error) {
 }
 
 func (s *Service) GetAssignedOrders(driverId string) ([]models.Order, error) {
-	uID, err := utils.ParseId(driverId)
+	dr, err := utils.ParseId(driverId)
 	if err != nil {
 		return nil, appErr.NewBadRequest("Invalid driver ID", err)
 	}
 
-	assignedStatuses := []models.Status{
+	validStatuses := []models.Status{
+		models.AcceptedByDriver,
 		models.Assigned,
 		models.InTransit,
 		models.Delivered,
 	}
 
-	var allOrders []models.Order
-	for _, status := range assignedStatuses {
-		orders, err := s.repo.GetOrderByStatus(status, &uID)
-		if err != nil {
-			return nil, err
-		}
-		allOrders = append(allOrders, orders...)
+	orders, err := s.repo.GetOrderByStatusAndDriver(dr, validStatuses)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get assigned orders", err)
 	}
 
-	return allOrders, nil
+	return orders, nil
 }
 
 func (s *Service) UpdateOrderStatus(req UpdateOrderStatusRequest, orderId string) error {
@@ -211,6 +208,43 @@ func (s *Service) UpdateOrderStatus(req UpdateOrderStatusRequest, orderId string
 		return appErr.NewInternal("Failed to update the order status", err)
 	}
 
+	return nil
+}
+
+func (s *Service) UpdateDriverOrderStatus(req UpdateOrderStatusRequest, orderId string, driverId string) error {
+	if req.Status != "ACCEPTED_BY_DRIVER" && req.Status != "REJECTED_BY_DRIVER" {
+		return appErr.NewBadRequest("Invalid request status by driver", nil)
+	}
+
+	orID, err := utils.ParseId(orderId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid order ID", err)
+	}
+
+	drID, err := utils.ParseId(driverId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid driver ID", err)
+	}
+
+	order, err := s.repo.GetOrderDetailsByID(orID)
+	if err != nil {
+		return appErr.NewInternal("Order not found", err)
+	}
+
+	if order.Status != models.ReadyForPickUp || order.DriverID != nil {
+		return appErr.NewBadRequest("Order not available for driver assignment", nil)
+	}
+
+	if req.Status == string(models.AcceptedByDriver) {
+		order.Status = models.AcceptedByDriver
+		order.DriverID = &drID
+	} else if req.Status == string(models.RejectedByDriver) {
+		order.Status = models.RejectedByDriver
+	}
+
+	if err := s.repo.UpdateOrderStatusAndDriver(order); err != nil {
+		return appErr.NewInternal("Failed to update order status", err)
+	}
 	return nil
 }
 

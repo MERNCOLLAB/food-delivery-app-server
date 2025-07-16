@@ -29,3 +29,26 @@ func (h *Handler) GetAssignedOrders(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{"assignedOrders": orders})
 }
+
+func (h *Handler) UpdateDriverOrderStatus(c *gin.Context) {
+	orderId := c.Param("id")
+
+	driverId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	req, err := http_helper.BindJSON[UpdateOrderStatusRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := h.service.UpdateDriverOrderStatus(*req, orderId, driverId); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Driver had updated the order status"})
+}

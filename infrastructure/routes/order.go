@@ -38,6 +38,7 @@ func RegisterOrderRoutes(r *gin.Engine, DB *gorm.DB) {
 
 	driver := order.Group("/", middleware.RequireRoles(models.Driver))
 	{
+		driver.PUT("/:id/driver", orderHandler.UpdateDriverOrderStatus)
 		driver.GET("/available", orderHandler.GetAvailableOrders)
 		driver.GET("/assigned", orderHandler.GetAssignedOrders)
 	}

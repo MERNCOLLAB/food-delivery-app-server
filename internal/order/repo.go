@@ -134,7 +134,7 @@ func (r *Repository) GetOrdersByRestaurantID(restoID uuid.UUID) ([]models.Order,
 	return orders, nil
 }
 
-func (r *Repository) GetOrderByStatus(status models.Status, driverID *uuid.UUID) ([]models.Order, error) {
+func (r *Repository) GetOrderByStatus(status models.Status) ([]models.Order, error) {
 	var orders []models.Order
 	query := r.db.
 		Preload("OrderItems.MenuItem").
@@ -143,15 +143,30 @@ func (r *Repository) GetOrderByStatus(status models.Status, driverID *uuid.UUID)
 		Preload("Driver").
 		Where("status = ?", status)
 
-	if driverID != nil {
-		query = query.Where("driver_id = ?", *driverID)
-	} else {
-		query = query.Where("driver_id IS NULL")
-	}
-
 	err := query.Order("placed_at DESC").Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
 	return orders, nil
+}
+
+func (r *Repository) GetOrderByStatusAndDriver(dr uuid.UUID, statuses []models.Status) ([]models.Order, error) {
+	var orders []models.Order
+	err := r.db.
+		Preload("OrderItems.MenuItem").
+		Preload("Restaurant").
+		Preload("Customer").
+		Preload("Driver").
+		Where("status IN ?", statuses).
+		Where("driver_id = ?", dr).
+		Order("placed_at DESC").
+		Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (r *Repository) UpdateOrderStatusAndDriver(order *models.Order) error {
+	return r.db.Save(order).Error
 }

@@ -143,8 +143,37 @@ func (s *Service) GetOrderHistory(userId string) ([]models.Order, error) {
 	return orders, nil
 }
 
-func (s *Service) GetAvailableOrders() {
+func (s *Service) GetAvailableOrders() ([]models.Order, error) {
+	status := models.ReadyForPickUp
+	orders, err := s.repo.GetOrderByStatus(status, nil)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get available orders", err)
+	}
+	return orders, nil
+}
 
+func (s *Service) GetAssignedOrders(driverId string) ([]models.Order, error) {
+	uID, err := utils.ParseId(driverId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid driver ID", err)
+	}
+
+	assignedStatuses := []models.Status{
+		models.Assigned,
+		models.InTransit,
+		models.Delivered,
+	}
+
+	var allOrders []models.Order
+	for _, status := range assignedStatuses {
+		orders, err := s.repo.GetOrderByStatus(status, &uID)
+		if err != nil {
+			return nil, err
+		}
+		allOrders = append(allOrders, orders...)
+	}
+
+	return allOrders, nil
 }
 
 func (s *Service) UpdateOrderStatus(req UpdateOrderStatusRequest, orderId string) error {

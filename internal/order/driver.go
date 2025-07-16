@@ -1,15 +1,31 @@
 package order
 
-import "github.com/gin-gonic/gin"
+import (
+	http_helper "food-delivery-app-server/pkg/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 func (h *Handler) GetAvailableOrders(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Available Orders Endpoint"})
+	orders, err := h.service.GetAvailableOrders()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(200, gin.H{"availableOrders": orders})
 }
 
 func (h *Handler) GetAssignedOrders(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Assigned Orders Endpoint"})
-}
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
 
-func (h *Handler) UpdateOrderByDriver(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Update Order Status"})
+	orders, err := h.service.GetAssignedOrders(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.JSON(200, gin.H{"assignedOrders": orders})
 }

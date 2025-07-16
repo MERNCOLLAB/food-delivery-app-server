@@ -133,3 +133,25 @@ func (r *Repository) GetOrdersByRestaurantID(restoID uuid.UUID) ([]models.Order,
 	}
 	return orders, nil
 }
+
+func (r *Repository) GetOrderByStatus(status models.Status, driverID *uuid.UUID) ([]models.Order, error) {
+	var orders []models.Order
+	query := r.db.
+		Preload("OrderItems.MenuItem").
+		Preload("Restaurant").
+		Preload("Customer").
+		Preload("Driver").
+		Where("status = ?", status)
+
+	if driverID != nil {
+		query = query.Where("driver_id = ?", *driverID)
+	} else {
+		query = query.Where("driver_id IS NULL")
+	}
+
+	err := query.Order("placed_at DESC").Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}

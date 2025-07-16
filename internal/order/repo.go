@@ -15,6 +15,10 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
+func OmitPassword(db *gorm.DB) *gorm.DB {
+	return db.Omit("password")
+}
+
 func (r *Repository) CreateOrder(order *models.Order, items []models.OrderItem) (*models.Order, error) {
 	// Starts a transaction to ensure order and order items creation are safe. If any one of those fails, the entire transaction
 	// rolls back to maintain data integrity
@@ -62,8 +66,8 @@ func (r *Repository) GetOrderDetailsByID(orID uuid.UUID) (*models.Order, error) 
 	err := r.db.
 		Preload("OrderItems.MenuItem").
 		Preload("Restaurant").
-		Preload("Customer").
-		Preload("Driver").
+		Preload("Customer", OmitPassword).
+		Preload("Driver", OmitPassword).
 		First(&order, "id = ?", orID).Error
 
 	if err != nil {
@@ -71,10 +75,6 @@ func (r *Repository) GetOrderDetailsByID(orID uuid.UUID) (*models.Order, error) 
 	}
 
 	return &order, nil
-}
-
-func (r *Repository) GetOrderByRestaurantID() {
-
 }
 
 func (r *Repository) UpdateOrderStatus(orderID uuid.UUID, status string) error {
@@ -123,8 +123,8 @@ func (r *Repository) GetOrdersByRestaurantID(restoID uuid.UUID) ([]models.Order,
 	var orders []models.Order
 	err := r.db.
 		Preload("OrderItems.MenuItem").
-		Preload("Customer").
-		Preload("Driver").
+		Preload("Customer", OmitPassword).
+		Preload("Driver", OmitPassword).
 		Where("restaurant_id = ?", restoID).
 		Order("placed_at DESC").
 		Find(&orders).Error
@@ -139,8 +139,8 @@ func (r *Repository) GetOrderByStatus(status models.Status) ([]models.Order, err
 	query := r.db.
 		Preload("OrderItems.MenuItem").
 		Preload("Restaurant").
-		Preload("Customer").
-		Preload("Driver").
+		Preload("Customer", OmitPassword).
+		Preload("Driver", OmitPassword).
 		Where("status = ?", status)
 
 	err := query.Order("placed_at DESC").Find(&orders).Error
@@ -155,8 +155,8 @@ func (r *Repository) GetOrderByStatusAndDriver(dr uuid.UUID, statuses []models.S
 	err := r.db.
 		Preload("OrderItems.MenuItem").
 		Preload("Restaurant").
-		Preload("Customer").
-		Preload("Driver").
+		Preload("Customer", OmitPassword).
+		Preload("Driver", OmitPassword).
 		Where("status IN ?", statuses).
 		Where("driver_id = ?", dr).
 		Order("placed_at DESC").

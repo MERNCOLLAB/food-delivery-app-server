@@ -114,8 +114,23 @@ func (s *Service) GetOrderDetails(orderId string) (*models.Order, error) {
 	return order, nil
 }
 
-func (s *Service) GetOrderHistory() {
+func (s *Service) GetOrderHistory(userId string) ([]models.Order, error) {
+	uID, err := utils.ParseId(userId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid user ID", err)
+	}
 
+	role, err := s.repo.GetUserRoleByID(uID)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get user role", err)
+	}
+
+	orders, err := s.repo.GetOrderHistoryByUser(uID, role)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get the order history", err)
+	}
+
+	return orders, nil
 }
 
 func (s *Service) GetAvailableOrders() {

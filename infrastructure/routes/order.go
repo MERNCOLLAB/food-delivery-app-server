@@ -17,7 +17,7 @@ func RegisterOrderRoutes(r *gin.Engine, DB *gorm.DB) {
 	allRoles := order.Group("/")
 	{
 		allRoles.GET("/:id", orderHandler.GetOrderDetails)
-		allRoles.GET("/history", orderHandler.GetOrderHistory) //not yet functional
+		allRoles.GET("/history", orderHandler.GetOrderHistory)
 	}
 
 	ownerAndDriver := order.Group("/", middleware.RequireRoles(models.Owner, models.Driver))

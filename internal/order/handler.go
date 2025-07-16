@@ -32,7 +32,19 @@ func (h *Handler) GetOrderDetails(c *gin.Context) {
 
 // Customer & Driver
 func (h *Handler) GetOrderHistory(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Order History Endpoint"})
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	orders, err := h.service.GetOrderHistory(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"orderHistory": orders})
 }
 
 // Owner & Driver

@@ -17,4 +17,5 @@ func RegisterRoutes(r *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
 	RegisterMenuItemsRoutes(r, DB)
 	RegisterAddressRoutes(r, DB)
 	RegisterOrderRoutes(r, DB)
+	RegisterNotificationRoutes(r, DB)
 }

@@ -36,7 +36,7 @@ func (h *Handler) CreateAddress(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, newAddr)
+	c.JSON(200, gin.H{"message": "Address addded successfully", "address": newAddr})
 }
 
 func (h *Handler) GetAddress(c *gin.Context) {
@@ -56,7 +56,27 @@ func (h *Handler) GetAddress(c *gin.Context) {
 }
 
 func (h *Handler) UpdateAddress(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Update Address Endpoint"})
+	addressId := c.Param("id")
+
+	req, err := http_helper.BindJSON[UpdateAddressRequest](c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	updatedAddr, err := h.service.UpdateAddress(addressId, userId, *req)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Address updated successfully", "address": updatedAddr})
 }
 
 func (h *Handler) DeleteAddress(c *gin.Context) {

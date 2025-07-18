@@ -49,8 +49,24 @@ func (r *Repository) GetAddress(uId uuid.UUID) ([]models.Address, error) {
 	return addresses, nil
 }
 
-func (r *Repository) UpdateAddress() {
+func (r *Repository) FindAddressByIdAndUserId(addressId, userId uuid.UUID) (*models.Address, error) {
+	var addr models.Address
+	err := r.db.Where("id = ? AND user_id = ?", addressId, userId).First(&addr).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, appErr.NewInternal("Failed to find address", err)
+	}
+	return &addr, nil
+}
 
+func (r *Repository) UpdateAddress(addr *models.Address) (*models.Address, error) {
+	err := r.db.Save(addr).Error
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to update address", err)
+	}
+	return addr, nil
 }
 
 func (r *Repository) DeleteAddress() {

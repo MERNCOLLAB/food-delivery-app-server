@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Address struct {
@@ -21,4 +22,32 @@ type Address struct {
 
 	User       *User       `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 	Restaurant *Restaurant `gorm:"foreignKey:RestaurantID;references:ID;constraint:OnDelete:CASCADE" json:"restaurant,omitempty"`
+}
+
+func (a Address) BeforeCreate(tx *gorm.DB) error {
+	if a.IsDefault {
+		return a.ensureSingleDefault(tx)
+	}
+	return nil
+}
+
+func (a Address) BeforeUpdate(tx *gorm.DB) error {
+	if a.IsDefault {
+		return a.ensureSingleDefault(tx)
+	}
+	return nil
+}
+
+func (a Address) ensureSingleDefault(tx *gorm.DB) error {
+	var query *gorm.DB
+
+	if a.UserID != nil {
+		query = tx.Model(&Address{}).Where("user_id = ? AND id != ?", a.UserID, a.ID)
+	} else if a.RestaurantID != nil {
+		query = tx.Model(&Address{}).Where("restaurant_id = ? AND id != ?", a.RestaurantID, a.ID)
+	} else {
+		return nil
+	}
+
+	return query.Update("is_default", false).Error
 }

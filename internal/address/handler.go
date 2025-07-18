@@ -40,7 +40,19 @@ func (h *Handler) CreateAddress(c *gin.Context) {
 }
 
 func (h *Handler) GetAddress(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get Address Endpoint"})
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	addresses, err := h.service.GetAddress(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, addresses)
 }
 
 func (h *Handler) UpdateAddress(c *gin.Context) {

@@ -72,8 +72,54 @@ func (s *Service) GetAddress(userId string) ([]models.Address, error) {
 	return addresses, nil
 }
 
-func (s *Service) UpdateAddress() {
+func (s *Service) UpdateAddress(addressId, userId string, req UpdateAddressRequest) (*models.Address, error) {
+	addrId, err := utils.ParseId(addressId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid Address ID", err)
+	}
 
+	uId, err := utils.ParseId(userId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid User ID", err)
+	}
+
+	currentAddr, err := s.repo.FindAddressByIdAndUserId(addrId, uId)
+	if err != nil {
+		return nil, err
+	}
+
+	if currentAddr == nil {
+		return nil, appErr.NewBadRequest("Address not found", nil)
+	}
+
+	if req.Address != nil && *req.Address != currentAddr.Address {
+		existingAddr, err := s.repo.FindAddressByUser(*req.Address, uId)
+		if err != nil {
+			return nil, err
+		}
+		if existingAddr != nil {
+			return nil, appErr.NewBadRequest("Address already exists for this user", nil)
+		}
+
+		ctx := context.Background()
+		lat, long, err := geocode.Geocode(ctx, *req.Address)
+		if err != nil {
+			return nil, appErr.NewInternal("Failed to geocode the provided address", err)
+		}
+
+		currentAddr.Latitude = lat
+		currentAddr.Longitude = long
+	}
+
+	if err := utils.Patch(currentAddr, &req); err != nil {
+		return nil, appErr.NewInternal("Failed to patch address fields", err)
+	}
+
+	updatedAddr, err := s.repo.UpdateAddress(currentAddr)
+	if err != nil {
+		return nil, err
+	}
+	return updatedAddr, nil
 }
 
 func (s *Service) DeleteAddress() {

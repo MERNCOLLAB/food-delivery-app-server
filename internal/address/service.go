@@ -58,8 +58,18 @@ func (s *Service) CreateAddress(req CreateAddressRequest, userId string) (*model
 	return newAddr, nil
 }
 
-func (s *Service) GetAddress() {
+func (s *Service) GetAddress(userId string) ([]models.Address, error) {
+	uId, err := utils.ParseId(userId)
+	if err != nil {
+		return nil, appErr.NewBadRequest("Invalid User ID", err)
+	}
 
+	addresses, err := s.repo.GetAddress(uId)
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get the addresses by user", err)
+	}
+
+	return addresses, nil
 }
 
 func (s *Service) UpdateAddress() {

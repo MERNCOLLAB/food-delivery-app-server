@@ -39,8 +39,14 @@ func (r *Repository) FindAddressByUser(address string, uId uuid.UUID) (*models.A
 	return &addr, nil
 }
 
-func (r *Repository) GetAddress() {
+func (r *Repository) GetAddress(uId uuid.UUID) ([]models.Address, error) {
+	var addresses []models.Address
 
+	err := r.db.Where("user_id = ?", uId).Find(&addresses).Error
+	if err != nil {
+		return nil, appErr.NewInternal("Failed to get addresses", err)
+	}
+	return addresses, nil
 }
 
 func (r *Repository) UpdateAddress() {

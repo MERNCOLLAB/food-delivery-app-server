@@ -69,6 +69,11 @@ func (r *Repository) UpdateAddress(addr *models.Address) (*models.Address, error
 	return addr, nil
 }
 
-func (r *Repository) DeleteAddress() {
+func (r *Repository) DeleteAddress(addrId, uId uuid.UUID) error {
+	err := r.db.Where("id = ? AND user_id = ?", addrId, uId).Delete(&models.Address{}).Error
+	if err != nil {
+		return appErr.NewInternal("Failed to delete address", err)
+	}
 
+	return nil
 }

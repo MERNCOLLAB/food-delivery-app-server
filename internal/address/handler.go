@@ -80,5 +80,19 @@ func (h *Handler) UpdateAddress(c *gin.Context) {
 }
 
 func (h *Handler) DeleteAddress(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Delete Address Endpoint"})
+	addressId := c.Param("id")
+
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = h.service.DeleteAddress(addressId, userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Address deleted successfully"})
 }

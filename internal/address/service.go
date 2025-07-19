@@ -122,6 +122,43 @@ func (s *Service) UpdateAddress(addressId, userId string, req UpdateAddressReque
 	return updatedAddr, nil
 }
 
-func (s *Service) DeleteAddress() {
+func (s *Service) DeleteAddress(addressId, userId string) error {
+	addrId, err := utils.ParseId(addressId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid Address ID", err)
+	}
 
+	uId, err := utils.ParseId(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid User ID", err)
+	}
+
+	currentAddr, err := s.repo.FindAddressByIdAndUserId(addrId, uId)
+	if err != nil {
+		return err
+	}
+
+	if currentAddr == nil {
+		return appErr.NewBadRequest("Address not found", nil)
+	}
+
+	if currentAddr.IsDefault {
+		return appErr.NewBadRequest("Cannot delete default address", nil)
+	}
+
+	allAddresses, err := s.repo.GetAddress(uId)
+	if err != nil {
+		return appErr.NewInternal("Failed to get user addresses", err)
+	}
+
+	if len(allAddresses) <= 1 {
+		return appErr.NewBadRequest("Cannot delete the only address in user profile", nil)
+	}
+
+	err = s.repo.DeleteAddress(addrId, uId)
+	if err != nil {
+		return appErr.NewInternal("Failed to delete address", err)
+	}
+
+	return nil
 }

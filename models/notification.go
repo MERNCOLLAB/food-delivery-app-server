@@ -10,7 +10,7 @@ type Notification struct {
 	ID        uuid.UUID  `gorm:"primaryKey;type:uuid" json:"id"`
 	UserID    uuid.UUID  `gorm:"type:uuid;index" json:"userId"`
 	OrderID   *uuid.UUID `gorm:"type:uuid;index" json:"orderId,omitempty"`
-	Message   string     `gorm:"type:varchar(50)" json:"message"`
+	Message   string     `gorm:"type:varchar(150)" json:"message"`
 	IsRead    bool       `json:"isRead"`
 	CreatedAt time.Time  `gorm:"autoCreateTime" json:"createdAt"`
 

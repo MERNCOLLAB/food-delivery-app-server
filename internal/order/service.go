@@ -234,38 +234,26 @@ func (s *Service) UpdateDriverOrderStatus(req UpdateOrderStatusRequest, orderId 
 		return appErr.NewInternal("Order not found", err)
 	}
 
-	switch req.Status {
-	case string(models.AcceptedByDriver):
-		if order.Status != models.ReadyForPickUp || order.DriverID != nil {
-			return appErr.NewBadRequest("Order not available for driver assignment", nil)
-		}
-		order.Status = models.AcceptedByDriver
-		order.DriverID = &drID
-	case string(models.RejectedByDriver):
-		if order.Status != models.ReadyForPickUp || order.DriverID != nil {
-			return appErr.NewBadRequest("Order not available for driver assignment", nil)
-		}
-		order.Status = models.RejectedByDriver
-	case string(models.InTransit):
-		if order.Status != models.AcceptedByDriver || order.DriverID == nil || *order.DriverID != drID {
-			return appErr.NewBadRequest("Order must be accepted by this driver before marking as in transit", nil)
-		}
-		order.Status = models.InTransit
-	case string(models.Delivered):
-		if order.Status != models.InTransit || order.DriverID == nil || *order.DriverID != drID {
-			return appErr.NewBadRequest("Order must be in transit by this driver before marking as delivered", nil)
-		}
-		order.Status = models.Delivered
-	default:
+	newStatus := models.Status(req.Status)
+	if !utils.IsValidOrderStatusTransition(order.Status, newStatus) {
 		return appErr.NewBadRequest("Invalid status transition", nil)
 	}
 
-	if req.Status == string(models.AcceptedByDriver) {
-		order.Status = models.AcceptedByDriver
-		order.DriverID = &drID
-	} else if req.Status == string(models.RejectedByDriver) {
-		order.Status = models.RejectedByDriver
+	switch newStatus {
+	case models.AcceptedByDriver, models.RejectedByDriver:
+		if order.Status != models.ReadyForPickUp || order.DriverID != nil {
+			return appErr.NewBadRequest("Order not available for driver assignment", nil)
+		}
+		if newStatus == models.AcceptedByDriver {
+			order.DriverID = &drID
+		}
+	case models.InTransit, models.Delivered:
+		if order.DriverID == nil || *order.DriverID != drID {
+			return appErr.NewBadRequest("Order must be assigned to this driver", nil)
+		}
 	}
+
+	order.Status = newStatus
 
 	if err := s.repo.UpdateOrderStatusAndDriver(order); err != nil {
 		return appErr.NewInternal("Failed to update order status", err)

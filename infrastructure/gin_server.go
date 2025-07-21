@@ -17,6 +17,13 @@ func RunGin() {
 
 	r := gin.Default()
 
+	if os.Getenv("GIN_MODE") == "release" {
+		err := r.SetTrustedProxies([]string{"127.0.0.1"})
+		if err != nil {
+			log.Fatalf("Failed to set trusted proxies: %v", err)
+		}
+	}
+
 	r.Use(middleware.ErrorHandler())
 
 	routes.RegisterRoutes(r, DB, RedisClient)

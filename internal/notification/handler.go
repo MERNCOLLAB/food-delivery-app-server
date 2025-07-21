@@ -51,5 +51,17 @@ func (h *Handler) MarkNotificationAsRead(c *gin.Context) {
 }
 
 func (h *Handler) MarkAllNotificationsAsRead(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Mark All Notification As Read Endpoint"})
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	err = h.service.MarkAllNotificationsAsRead(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "All notifications were marked as read"})
 }

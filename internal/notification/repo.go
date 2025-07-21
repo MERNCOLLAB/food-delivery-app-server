@@ -40,3 +40,15 @@ func (r *Repository) MarkNotificationAsRead(nId, uId uuid.UUID) error {
 
 	return nil
 }
+
+func (r *Repository) MarkAllNotificationsAsRead(uId uuid.UUID) error {
+	res := r.db.Model(&models.Notification{}).
+		Where("user_id = ?", uId).
+		Update("is_read", true)
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	return nil
+}

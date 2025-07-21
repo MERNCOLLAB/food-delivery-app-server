@@ -46,3 +46,17 @@ func (s *Service) MarkNotificationAsRead(notificationId, userId string) error {
 	}
 	return nil
 }
+
+func (s *Service) MarkAllNotificationsAsRead(userId string) error {
+	uId, err := uuid.Parse(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid user ID", err)
+	}
+
+	err = s.repo.MarkAllNotificationsAsRead(uId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

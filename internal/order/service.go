@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"food-delivery-app-server/models"
+	"food-delivery-app-server/pkg/notifications"
 	"food-delivery-app-server/pkg/utils"
 
 	"github.com/google/uuid"
@@ -208,11 +209,13 @@ func (s *Service) UpdateOrderStatus(req UpdateOrderStatusRequest, orderId string
 		return appErr.NewInternal("Failed to update the order status", err)
 	}
 
+	_ = notifications.CreateStatusChangeNotifications(s.repo, order, newStatus)
+
 	return nil
 }
 
 func (s *Service) UpdateDriverOrderStatus(req UpdateOrderStatusRequest, orderId string, driverId string) error {
-	if req.Status != "ACCEPTED_BY_DRIVER" && req.Status != "REJECTED_BY_DRIVER" {
+	if req.Status != "ACCEPTED_BY_DRIVER" && req.Status != "REJECTED_BY_DRIVER" && req.Status != "IN_TRANSIT" && req.Status != "DELIVERED" {
 		return appErr.NewBadRequest("Invalid request status by driver", nil)
 	}
 
@@ -231,20 +234,33 @@ func (s *Service) UpdateDriverOrderStatus(req UpdateOrderStatusRequest, orderId 
 		return appErr.NewInternal("Order not found", err)
 	}
 
-	if order.Status != models.ReadyForPickUp || order.DriverID != nil {
-		return appErr.NewBadRequest("Order not available for driver assignment", nil)
+	newStatus := models.Status(req.Status)
+	if !utils.IsValidOrderStatusTransition(order.Status, newStatus) {
+		return appErr.NewBadRequest("Invalid status transition", nil)
 	}
 
-	if req.Status == string(models.AcceptedByDriver) {
-		order.Status = models.AcceptedByDriver
-		order.DriverID = &drID
-	} else if req.Status == string(models.RejectedByDriver) {
-		order.Status = models.RejectedByDriver
+	switch newStatus {
+	case models.AcceptedByDriver, models.RejectedByDriver:
+		if order.Status != models.ReadyForPickUp || order.DriverID != nil {
+			return appErr.NewBadRequest("Order not available for driver assignment", nil)
+		}
+		if newStatus == models.AcceptedByDriver {
+			order.DriverID = &drID
+		}
+	case models.InTransit, models.Delivered:
+		if order.DriverID == nil || *order.DriverID != drID {
+			return appErr.NewBadRequest("Order must be assigned to this driver", nil)
+		}
 	}
+
+	order.Status = newStatus
 
 	if err := s.repo.UpdateOrderStatusAndDriver(order); err != nil {
 		return appErr.NewInternal("Failed to update order status", err)
 	}
+
+	_ = notifications.CreateStatusChangeNotifications(s.repo, order, order.Status)
+
 	return nil
 }
 
@@ -282,6 +298,8 @@ func (s *Service) CancelOrder(orderId string, userId string) error {
 	if err := s.repo.UpdateOrderStatus(orID, cancelStatus); err != nil {
 		return appErr.NewInternal("Failed to cancel the order", err)
 	}
+
+	_ = notifications.CreateStatusChangeNotifications(s.repo, order, models.Canceled)
 
 	return nil
 }

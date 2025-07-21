@@ -5,8 +5,6 @@
 ![Go](https://img.shields.io/badge/Go-1.24.5-blue?logo=go)
 
 
-💫 In progress... To be written in GoLang
-
 ## 🚀 Getting Started
 
 Follow these steps to set up and run the server locally:

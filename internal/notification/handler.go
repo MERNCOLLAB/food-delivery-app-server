@@ -3,6 +3,8 @@ package notification
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
+	http_helper "food-delivery-app-server/pkg/http"
 )
 
 type Handler struct {
@@ -16,7 +18,19 @@ func NewHandler(db *gorm.DB) *Handler {
 }
 
 func (h *Handler) GetUserNotifications(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "Get User Notification Endpoint"})
+	userId, err := http_helper.ExtractUserIDFromContext(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	notifications, err := h.service.GetUserNotifications(userId)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, notifications)
 }
 
 func (h *Handler) MarkNotificationAsRead(c *gin.Context) {

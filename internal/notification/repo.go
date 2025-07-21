@@ -24,3 +24,19 @@ func (r *Repository) GetUserNotifications(userId uuid.UUID) ([]models.Notificati
 	}
 	return notifications, nil
 }
+
+func (r *Repository) MarkNotificationAsRead(nId, uId uuid.UUID) error {
+	res := r.db.Model(&models.Notification{}).
+		Where("id = ? AND user_id = ?", nId, uId).
+		Update("is_read", true)
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
+}

@@ -28,3 +28,21 @@ func (s *Service) GetUserNotifications(userId string) ([]models.Notification, er
 	}
 	return notifications, nil
 }
+
+func (s *Service) MarkNotificationAsRead(notificationId, userId string) error {
+	nId, err := uuid.Parse(notificationId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid notification ID", err)
+	}
+
+	uId, err := uuid.Parse(userId)
+	if err != nil {
+		return appErr.NewBadRequest("Invalid user ID", err)
+	}
+
+	err = s.repo.MarkNotificationAsRead(nId, uId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

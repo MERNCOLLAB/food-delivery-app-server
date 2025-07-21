@@ -14,7 +14,7 @@ func RegisterNotificationRoutes(r *gin.Engine, DB *gorm.DB) {
 	notifGroup := r.Group("/notifications", middleware.JWTAuthMiddleware())
 	{
 		notifGroup.GET("/", notifHandler.GetUserNotifications)
-		notifGroup.PUT("/:id/read", notifHandler.MarkNotificationAsRead)          //not yet functional
+		notifGroup.PUT("/:id/read", notifHandler.MarkNotificationAsRead)
 		notifGroup.PUT("/mark-all-read", notifHandler.MarkAllNotificationsAsRead) //not yet functional
 	}
 }

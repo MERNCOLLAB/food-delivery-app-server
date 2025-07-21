@@ -2,6 +2,7 @@ package routes
 
 import (
 	"food-delivery-app-server/internal/order"
+	"food-delivery-app-server/internal/realtime"
 	"food-delivery-app-server/middleware"
 	"food-delivery-app-server/models"
 
@@ -13,6 +14,8 @@ func RegisterOrderRoutes(r *gin.Engine, DB *gorm.DB) {
 	orderHandler := order.NewHandler(DB)
 
 	order := r.Group("/orders", middleware.JWTAuthMiddleware())
+
+	order.GET("/:id/location", realtime.DeliveryLocationWS)
 
 	allRoles := order.Group("/")
 	{

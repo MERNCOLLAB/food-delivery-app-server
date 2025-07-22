@@ -1,4 +1,7 @@
 tmp/*
+fly.toml
 .env
 .vscode
+.github
+
 test-deploy

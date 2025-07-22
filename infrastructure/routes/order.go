@@ -15,7 +15,7 @@ func RegisterOrderRoutes(r *gin.Engine, DB *gorm.DB) {
 
 	order := r.Group("/orders", middleware.JWTAuthMiddleware())
 
-	r.GET("/:id/location", realtime.DeliveryLocationWS)
+	order.GET("/:id/location", realtime.DeliveryLocationWS)
 
 	allRoles := order.Group("/")
 	{

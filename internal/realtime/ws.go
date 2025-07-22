@@ -28,6 +28,11 @@ func broadcastLocation(orderID string, msg map[string]interface{}) {
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
 	for client := range clients[orderID] {
+		if err := client.conn.WriteJSON(msg); err != nil {
+			delete(clients[orderID], client)
+			client.conn.Close()
+		}
+
 		client.conn.WriteJSON(msg)
 	}
 }

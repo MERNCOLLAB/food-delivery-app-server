@@ -3,7 +3,8 @@ package realtime
 import "github.com/gin-gonic/gin"
 
 func DeliveryLocationWS(c *gin.Context) {
-	orderId := c.Param("orderId")
+	orderId := c.Param("id")
+
 
 	conn, err := Upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -15,8 +16,9 @@ func DeliveryLocationWS(c *gin.Context) {
 
 	clientsMu.Lock()
 	if clients[orderId] == nil {
-		clients[orderId][ws] = true
+		clients[orderId] = make(map[*WS]bool)
 	}
+	clients[orderId][ws] = true
 	clientsMu.Unlock()
 
 	defer func() {

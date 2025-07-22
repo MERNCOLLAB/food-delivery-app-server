@@ -13,5 +13,5 @@ func main() {
 
 	infrastructure.ConnectRedis()
 	infrastructure.ConnectDb()
-	infrastructure.RunGin()
+	infrastructure.RunGin(config.CORS())
 }

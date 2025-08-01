@@ -32,7 +32,7 @@ func RunGin(corsConfig cors.Config) {
 
 	routes.RegisterRoutes(r, DB, RedisClient)
 
-	err := r.Run(":" + port)
+	err := r.Run("0.0.0.0:" + port)
 	if err != nil {
 		log.Fatal("Failed to run the server")
 	}

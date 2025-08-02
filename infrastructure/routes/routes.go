@@ -7,6 +7,10 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, DB *gorm.DB, rdb *redis.Client) {
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "🍱 Food Delivery App Server is running. Server developed by Bryan Castillo."})
+	})
+
 	// Baseline Feature Routes
 	RegisterAuthRoutes(r, DB, rdb)
 	RegisterUserRoutes(r, DB)
